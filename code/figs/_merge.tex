@@ -1,0 +1,12 @@
+\documentclass[border=0pt]{standalone}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{helvet}
+\begin{document}
+\begin{tikzpicture}
+  \node[anchor=south west, inner sep=0] (a) at (0,0) {\includegraphics[height=5.5cm]{Fig_experiment-1-cropped.pdf}};
+  \node[anchor=south west, font=\sffamily\bfseries\small, xshift=0pt, yshift=1pt] at (a.north west) {(a)};
+  \node[anchor=south west, inner sep=0] (b) at ([xshift=4pt]a.south east) {\includegraphics[height=5.5cm]{Fig_experiment-2-cropped.pdf}};
+  \node[anchor=south west, font=\sffamily\bfseries\small, xshift=0pt, yshift=1pt] at (b.north west) {(b)};
+\end{tikzpicture}
+\end{document}

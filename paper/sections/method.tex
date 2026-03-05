@@ -1,0 +1,64 @@
+% method.tex -- Stochastic Attention via Langevin Dynamics on the Hopfield Energy
+
+The background section established three facts: (i) attention is one step of gradient descent on the modern Hopfield energy $E$, (ii) $E$ is smooth and confining, and (iii) Langevin dynamics converts any smooth, confining energy into a sampler for the corresponding Boltzmann distribution. We now combine these facts to derive \emph{stochastic attention}, a single update rule that interpolates between deterministic memory retrieval and stochastic generation of novel states.
+
+\subsection{Stochastic Attention Update}
+Recall the setup from Section~3: the memory matrix $\mathbf{X}=[\mathbf{m}_1,\dots,\mathbf{m}_K]\in\mathbb{R}^{N\times K}$ has $K$ stored memories as its columns, each of dimension $N$. We wish to sample from the Boltzmann distribution induced by the modern Hopfield energy~\eqref{eq:modern-hopfield-energy}:
+\begin{equation}\label{eq:boltzmann-hopfield}
+    p_\beta(\boldsymbol{\xi})
+    \;\propto\; \exp\!\bigl(-\beta\, E(\boldsymbol{\xi})\bigr),
+\end{equation}
+where $\beta>0$ is the inverse temperature and $E$ is defined in~\eqref{eq:modern-hopfield-energy}. To apply the ULA~\eqref{eq:ula} we need $\nabla E$. The background already established the identity $\nabla E(\boldsymbol{\xi})=\boldsymbol{\xi}-\mathbf{T}(\boldsymbol{\xi})$, where $\mathbf{T}$ is the softmax attention map~\eqref{eq:hopfield-update}. Reparameterizing the ULA via $U=\beta E$ and rescaling time by $\beta$ (so the gradient of $E$, rather than $\beta E$, appears directly), we obtain
+\begin{equation}\label{eq:stochastic-attention}
+    \boldsymbol{\xi}_{t+1}
+    = \boldsymbol{\xi}_t
+      - \alpha\bigl(\boldsymbol{\xi}_t - \mathbf{T}(\boldsymbol{\xi}_t)\bigr)
+      + \sqrt{\tfrac{2\alpha}{\beta}}\;\boldsymbol{\epsilon}_t,
+    \qquad \boldsymbol{\epsilon}_t\sim\mathcal{N}(\mathbf{0},\mathbf{I}),
+\end{equation}
+which, after collecting terms, takes the form
+\begin{equation}\label{eq:stochastic-attention-expanded}
+    \boxed{\;
+    \boldsymbol{\xi}_{t+1}
+    = (1-\alpha)\,\boldsymbol{\xi}_t
+      + \alpha\,\mathbf{X}\,\operatorname{softmax}\!\bigl(\beta\,\mathbf{X}^{\top}\boldsymbol{\xi}_t\bigr)
+      + \sqrt{\tfrac{2\alpha}{\beta}}\;\boldsymbol{\epsilon}_t
+    \;}
+\end{equation}
+This is the \emph{stochastic attention} update. Each iteration performs three operations: a contraction toward the origin (the $(1-\alpha)\boldsymbol{\xi}_t$ term), a softmax-weighted pull toward stored memories (the attention term), and an isotropic Gaussian perturbation whose magnitude is governed by the temperature $1/\beta$. The complete procedure is given as pseudocode in Algorithm~\ref{alg:stochastic-attention}. Because the memory matrix $\mathbf{X}$ is fixed and known, each step requires only the same primitive operations as a single attention head: two matrix-vector products, one softmax, and one Gaussian draw, for a per-step cost of $\mathcal{O}(NK)$.
+
+
+\begin{algorithm}[t]
+\caption{Stochastic Attention Sampler}\label{alg:stochastic-attention}
+\begin{algorithmic}[1]
+\REQUIRE Memory matrix $\mathbf{X}\in\mathbb{R}^{N\times K}$, inverse temperature $\beta>0$, step size $\alpha\in(0,1)$, number of iterations $T$, initial state $\boldsymbol{\xi}_0\in\mathbb{R}^N$
+\ENSURE Sample trajectory $\boldsymbol{\xi}_0,\boldsymbol{\xi}_1,\dots,\boldsymbol{\xi}_T$
+\FOR{$t = 0,1,\dots,T-1$}
+    \STATE $\mathbf{a}_t \leftarrow \operatorname{softmax}\!\bigl(\beta\,\mathbf{X}^{\top}\boldsymbol{\xi}_t\bigr)$ \hfill $\triangleright$ attention weights
+    \STATE $\boldsymbol{\epsilon}_t \sim \mathcal{N}(\mathbf{0},\mathbf{I}_N)$
+    \STATE $\boldsymbol{\xi}_{t+1} \leftarrow (1-\alpha)\,\boldsymbol{\xi}_t + \alpha\,\mathbf{X}\,\mathbf{a}_t + \sqrt{2\alpha/\beta}\;\boldsymbol{\epsilon}_t$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Properties and Limiting Behavior}
+The update~\eqref{eq:stochastic-attention-expanded} is controlled by two parameters, the inverse temperature $\beta$ and the step size $\alpha$, that together determine where the sampler sits on a spectrum from exact retrieval to open-ended generation.
+
+When $\beta\to\infty$ and the noise vanishes, the softmax sharpens to a hard $\arg\max$ and the update reduces to deterministic retrieval of the nearest stored memory (\emph{hard attention}). At finite $\beta$ with zero noise, the update yields the standard softmax-weighted average familiar from transformers (\emph{soft attention}). When $\beta$ is finite and noise is present, the sampler generates states that fluctuate around stored memories, producing novel patterns shaped by the memory geometry (\emph{stochastic attention}). As $\beta\to 0$, the Boltzmann distribution flattens and sampling becomes noise-dominated. The step size $\alpha\in(0,1)$ controls discretization fidelity: smaller $\alpha$ reduces ULA bias~\cite{durmusNonasymptoticAnalysisUnadjusted2017} at the cost of slower mixing, while larger $\alpha$ accelerates exploration but increases discretization error.
+
+Beyond these limiting behaviors, the sampler inherits concrete guarantees from the analytic structure of the Hopfield energy. Because the gradient $\nabla E(\boldsymbol{\xi})=\boldsymbol{\xi}-\mathbf{T}(\boldsymbol{\xi})$ is computed exactly by a single attention operation, the score function $\nabla\log p_\beta = \beta(\mathbf{T}-\boldsymbol{\xi})$ is known in closed form; no auxiliary score network is needed. The following proposition (proved in Appendix~\ref{app:proof-regularity}) makes the regularity conditions from Section~3 explicit.
+
+\begin{proposition}\label{prop:regularity}
+Let $\sigma_{\max}=\|\mathbf{X}\|_{\mathrm{op}}$ denote the largest singular value of the memory matrix. The modern Hopfield energy~\eqref{eq:modern-hopfield-energy} has Lipschitz-continuous gradient with constant $L = 1 + \beta\sigma_{\max}^{2}/2$ and satisfies the dissipativity condition $\langle \nabla E(\boldsymbol{\xi}),\boldsymbol{\xi}\rangle \ge \|\boldsymbol{\xi}\|_2^2/2 - M^2/2$ for all $\boldsymbol{\xi}\in\mathbb{R}^N$.
+\end{proposition}
+
+The Lipschitz constant grows linearly in $\beta$: the energy landscape sharpens at low temperature and step-size selection becomes more delicate. The Hessian satisfies $\nabla^2 E \succeq (1-\beta\sigma_{\max}^{2}/2)\mathbf{I}$, so $E$ is strictly convex when $\beta\sigma_{\max}^{2}<2$, yielding the following convergence guarantee.
+
+\begin{corollary}\label{cor:convergence}
+When $\beta\sigma_{\max}^{2}<2$, the potential $U=\beta E$ is $m$-strongly convex with $m=\beta(1-\beta\sigma_{\max}^{2}/2)$ and has $L_{U}$-Lipschitz gradient with $L_{U}=\beta(1+\beta\sigma_{\max}^{2}/2)$. The iterates of Algorithm~\ref{alg:stochastic-attention} then converge to~$p_\beta$ in $W_2$ at a geometric rate, with a discretization bias that vanishes as $\alpha\to 0$~\cite{dalalyanTheoreticalGuaranteesApproximate2017,durmusNonasymptoticAnalysisUnadjusted2017}. For arbitrary $\beta>0$ the continuous-time Langevin diffusion is geometrically ergodic~\cite{robertsTweedieExponentialConvergence1996}; the ULA discretization approximates $p_\beta$ with bias $O(\alpha)$.
+\end{corollary}
+
+\paragraph{Scope of the convergence guarantee.}
+Corollary~\ref{cor:convergence}'s geometric-rate guarantee requires $\beta\sigma_{\max}^{2}<2$, i.e., a log-concave energy. In our experiments $\sigma_{\max}^{2}\approx 2$--$3$, so this condition holds only for $\beta\lesssim 1$, far below the operating range. At $\beta\ge 200$ the energy is multimodal and the log-concave rate bound no longer applies; deriving explicit mixing-time bounds in this regime is an open problem. Two complementary guarantees nonetheless support the operating regime: the continuous-time Langevin SDE is geometrically ergodic for any $\beta>0$ by Proposition~\ref{prop:regularity}~\cite{robertsTweedieExponentialConvergence1996}, and the MALA acceptance rate of 99.2\% at $\alpha{=}0.01$ (Table~\ref{tab:mnist-baselines}) confirms negligible ULA discretization bias in practice.
+
+Because $\mathbf{X}$ is given as data, there are no learned parameters: no training loop, no contrastive divergence, and no score-matching objective. The confining bound~\eqref{eq:energy-lower-bound} keeps iterates concentrated near $\mathrm{conv}\{\mathbf{m}_1,\dots,\mathbf{m}_K\}$ with excursions controlled by $\sqrt{2\alpha/\beta}$; Section~5 derives a dimension-independent $\beta$-selection rule from the per-step signal-to-noise ratio.

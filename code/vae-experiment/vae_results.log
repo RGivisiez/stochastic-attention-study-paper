@@ -1,0 +1,27 @@
+  Activating project at `~/Desktop/julia_work/stochastic-attention-model/code/mnist-experiment`
+[ Info: Loading MNIST patterns (digit=3, K=100) …
+[ Info: Memory matrix: (784, 100)  (each column is unit-normalized)
+[ Info: Phase 1: autoencoder training (2000 epochs) …
+[ Info:   AE epoch 500  recon = 0.0187
+[ Info:   AE epoch 1000  recon = 0.0012
+[ Info:   AE epoch 1500  recon = 0.0001
+[ Info:   AE epoch 2000  recon = 0.0
+[ Info: Phase 2: VAE training with KL warmup (2000 epochs) …
+[ Info:   VAE epoch 500  total = 0.0016
+[ Info:   VAE epoch 1000  total = 0.0025
+[ Info:   VAE epoch 1500  total = 0.0035
+[ Info:   VAE epoch 2000  total = 0.004
+[ Info: Training complete.
+[ Info: Generating 150 samples (z ~ N(0,I)) …
+[ Info: Computing metrics …
+
+════════════════════════════════════════════════════════════
+VAE RESULTS  (digit=3, K=100, latent=8)
+════════════════════════════════════════════════════════════
+  Novelty   N̄  = 0.214 ± 0.005
+  Diversity D̄  = 0.441 ± 0.008
+  Energy    Ē  = -0.286 ± 0.005
+
+% --- VAE row for tab:mnist-baselines (copy into experiments.tex) ---
+VAE (latent${=}8) & $0.214 \pm 0.005$ & $0.441 \pm 0.008$ & $-0.286 \pm 0.005$ \\
+════════════════════════════════════════════════════════════
