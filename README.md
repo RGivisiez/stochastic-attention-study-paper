@@ -43,9 +43,29 @@ Several experiments are also available as self-contained Julia scripts that can 
   julia --project=. run_multidigit_experiment.jl
   ```
 
-- **`code/run_single_chain_experiment.jl`** — runs a single long chain (T=50,000) on digit 3 at β∈{2000,200,50} to decompose multi-chain diversity into initialization and within-chain mixing contributions. Execute from `code/`:
+- **`code/mnist-experiment/run_single_chain_experiment.jl`** — runs a single long chain (T=50,000) on digit 3 at β∈{2000,200,50} to decompose multi-chain diversity into initialization and within-chain mixing contributions. Execute from `code/mnist-experiment/`:
   ```
   julia --project=. run_single_chain_experiment.jl
+  ```
+
+- **`code/mnist-experiment/run_gmm_experiment.jl`** — runs the GMM-PCA baseline (PCA to r=50 dimensions, 10-component diagonal-covariance GMM via EM, sample and reconstruct) on digit 3. Produces the GMM-PCA row in Table 1. Execute from `code/mnist-experiment/`:
+  ```
+  julia --project=. run_gmm_experiment.jl
+  ```
+
+- **`code/mnist-experiment/run_sa_beta200_digit3.jl`** — runs SA and MALA at β=200 (generation regime) on digit 3 using the identical 30-chain protocol. Produces the SA (β=200) row in Table 1. Execute from `code/mnist-experiment/`:
+  ```
+  julia --project=. run_sa_beta200_digit3.jl
+  ```
+
+- **`code/mnist-experiment/run_before_after.jl`** — generates a before/after figure for digit 8, showing stored patterns alongside generated samples from the same chains. Execute from `code/mnist-experiment/`:
+  ```
+  julia --project=. run_before_after.jl
+  ```
+
+- **`code/mnist-experiment/run_temp_spectrum_digit8.jl`** — generates temperature spectrum visualizations on digit 8, showing how samples change across β ∈ {10, 50, 200, 2000}. Execute from `code/mnist-experiment/`:
+  ```
+  julia --project=. run_temp_spectrum_digit8.jl
   ```
 
 - **`code/vae-experiment/run_vae_experiment.jl`** — trains a small VAE (latent dim 8, two-phase training to prevent posterior collapse) on the same K=100 digit-3 patterns used in the main MNIST experiment, generates 150 samples, and reports novelty/diversity/energy metrics with standard errors. Results: N=0.214±0.005, D̄=0.441±0.008, Ē=−0.286±0.005 — the strongest non-Langevin baseline. Execute from `code/vae-experiment/`:

@@ -196,7 +196,7 @@ Figure~\ref{fig:phase-diagram} showed the full phase diagram of attention concen
 
 \section{Multi-Digit MNIST Generalization}\label{app:multidigit}
 
-To verify that the results reported for digit ``3'' in the main text are not specific to a single morphological class, we repeated the identical multi-chain protocol (30~chains, $T{=}5{,}000$, burn-in~$2{,}000$, thin every 600, $\beta{=}2000$, $\alpha{=}0.01$, $K{=}100$ stored patterns per digit) on two additional MNIST digits chosen for their distinct morphological properties: digit ``1'' (simple stroke, near-degenerate orientation) and digit ``8'' (complex topology with two enclosed loops and high intra-class variance). All seven baselines (including the VAE) and the MALA variant were run with the identical protocol; results appear in Tables~\ref{tab:mnist-digit1} and~\ref{tab:mnist-digit8}.
+To verify that the results reported for digit ``3'' in the main text are not specific to a single morphological class, we repeated the identical multi-chain protocol (30~chains, $T{=}5{,}000$, burn-in~$2{,}000$, thin every 100 then sub-sample 5, $\beta{=}2000$, $\alpha{=}0.01$, $K{=}100$ stored patterns per digit) on two additional MNIST digits chosen for their distinct morphological properties: digit ``1'' (simple stroke, near-degenerate orientation) and digit ``8'' (complex topology with two enclosed loops and high intra-class variance). All seven baselines (including the VAE) and the MALA variant were run with the identical protocol; results appear in Tables~\ref{tab:mnist-digit1} and~\ref{tab:mnist-digit8}.
 
 \begin{table}[h]
 \centering
@@ -516,7 +516,7 @@ At $d=4{,}096$, the MNIST value $\beta=2{,}000$ gives $\mathrm{SNR}=\sqrt{\alpha
 \beta = \mathrm{SNR}_{\mathrm{MNIST}}^{2}\cdot\frac{2d}{\alpha}
 = 0.01276 \times \frac{2\times 4096}{0.01} \approx 10{,}449.
 \end{equation*}
-We used $\beta=10{,}000$ ($\mathrm{SNR}=0.110$), recovering the MNIST operating point. All other hyperparameters were identical to the MNIST experiment: $\alpha=0.01$, 30 independent chains initialized near distinct stored patterns ($\sigma_{\mathrm{init}}=0.01$), $T=5{,}000$ iterations, burn-in $2{,}000$, thin every 600, yielding $30\times 5=150$ samples per method. The MALA acceptance rate exceeded 99\%, confirming that ULA discretization bias is negligible.
+We used $\beta=10{,}000$ ($\mathrm{SNR}=0.110$), recovering the MNIST operating point. All other hyperparameters were identical to the MNIST experiment: $\alpha=0.01$, 30 independent chains initialized near distinct stored patterns ($\sigma_{\mathrm{init}}=0.01$), $T=5{,}000$ iterations, burn-in $2{,}000$, thin every 100 then sub-sample 5 per chain, yielding $30\times 5=150$ samples per method. The MALA acceptance rate exceeded 99\%, confirming that ULA discretization bias is negligible.
 
 \paragraph{Temperature spectrum.}
 Figure~\ref{fig:simpsons-spectrum} showed four samples at each of six inverse temperatures spanning $\beta\in\{500,1000,2000,5000,10000,20000\}$, corresponding to $\mathrm{SNR}\in\{0.025,0.035,0.049,0.078,0.110,0.156\}$. The noise-to-retrieval transition tracked SNR, not the raw $\beta$ value: rows below $\mathrm{SNR}\approx 0.05$ show diffuse gray images, while rows at $\mathrm{SNR}\geq 0.110$ yield recognizable character faces.

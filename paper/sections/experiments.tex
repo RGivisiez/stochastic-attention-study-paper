@@ -18,12 +18,12 @@ Unless otherwise noted we fixed $d=64$; the convergence experiment used $d=8$ so
 All datasets were generated with fixed random seeds.
 
 We evaluated how the inverse temperature $\beta$ controlled the transition from noise-dominated diffusion to near-deterministic retrieval (Fig.~\ref{fig:experiments}a).
-We stored $K=16$ unit-norm patterns in $\mathbf{X}\in\mathbb{R}^{64\times 16}$ and ran Algorithm~1 for $T=10{,}000$ iterations at each of 25 log-spaced values of $\beta$ spanning the range $[10^{-2},\,10^{3}]$, with step size $\alpha=0.01$ and a burn-in of $2{,}000$ samples.
+We stored $K=16$ unit-norm patterns in $\mathbf{X}\in\mathbb{R}^{64\times 16}$ and ran Algorithm~1 for $T=10{,}000$ iterations at each of 25 values of $\beta$ spanning the range $[10^{-2},\,10^{3}]$ (approximately log-spaced), with step size $\alpha=0.01$ and a burn-in of $2{,}000$ samples.
 For every post-burn-in sample $\boldsymbol{\xi}_t$ we recorded two diagnostics: the cosine similarity to the nearest stored pattern, $\max_{k}\mathbf{m}_{k}^{\top}\boldsymbol{\xi}_{t}/(\lVert\mathbf{m}_{k}\rVert\lVert\boldsymbol{\xi}_{t}\rVert)$, and the Shannon entropy of the attention weights, $H(\mathbf{p})=-\sum_{k}p_{k}\log p_{k}$ where $\mathbf{p}=\operatorname{softmax}(\beta\mathbf{X}^{\top}\boldsymbol{\xi}_{t})$.
 
 Both curves exhibited a smooth sigmoidal transition centered near $\beta\approx 5\text{--}10$.
 At small $\beta$ the cosine similarity plateaued around $0.22$, consistent with the expected inner product between a random unit vector and 16 stored patterns in 64 dimensions, while the entropy saturated at $\log K\approx 2.77$~nats, the uniform limit.
-As $\beta$ increased through the transition region the attention weights concentrated on a single pattern: the entropy dropped sharply to zero by $\beta\approx 25$, and the cosine similarity rose to $0.97$ at $\beta=1000$.
+As $\beta$ increased through the transition region the attention weights concentrated on a single pattern: the entropy dropped sharply to zero by $\beta\approx 25$, and the cosine similarity rose to $0.969$ at $\beta=1000$.
 The variance of both diagnostics peaked in the transition region, where the chain intermittently switched between pattern-aligned and exploratory states.
 These results confirmed that $\beta$ acts as a continuous order parameter interpolating between disordered and ordered phases, in direct analogy to the paramagnetic-to-ferromagnetic transition in classical Hopfield networks~\cite{ackeleyLearningAlgorithmBoltzmann1985}; the useful generation regime occupies intermediate $\beta$ values whose scale is problem-dependent and set by the SNR argument of Eq.~\eqref{eq:snr}.
 
@@ -44,7 +44,7 @@ The synthetic experiments above validated the sampler's statistical properties o
 We selected $K=100$ images of the digit ``3'' from the MNIST training set~\cite{lecunGradientBasedLearningApplied1998}, flattened each to a vector in $\mathbb{R}^{784}$, and normalized to unit norm to form the memory matrix $\mathbf{X}\in\mathbb{R}^{784\times 100}$ (load ratio $K/d\approx 0.13$).
 Because the energy landscape at high $\beta$ is deeply multimodal, a single long chain can become trapped in one basin for the entire run.
 We therefore launched 30 independent chains, each initialized near a different randomly chosen stored pattern with a small Gaussian perturbation ($\sigma_{\mathrm{init}}=0.01$).
-Each chain ran Algorithm~\ref{alg:stochastic-attention} at $\beta=2000$ with step size $\alpha=0.01$ for $T=5{,}000$ iterations; after discarding the first $2{,}000$ steps as burn-in and thinning every 600th sample, we retained 5 samples per chain, yielding $30\times 5=150$ generated images that collectively span 30 distinct energy basins.
+Each chain ran Algorithm~\ref{alg:stochastic-attention} at $\beta=2000$ with step size $\alpha=0.01$ for $T=5{,}000$ iterations; after discarding the first $2{,}000$ steps as burn-in, thinning every 100th iteration to obtain 30 post-burn-in snapshots, and sub-sampling 5 evenly spaced snapshots per chain, we retained $30\times 5=150$ generated images that collectively span 30 distinct energy basins.
 
 The choice of $\beta=2000$ follows from the per-step signal-to-noise ratio,
 \begin{equation}

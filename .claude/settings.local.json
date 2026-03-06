@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Read(//Users/jdv27/Desktop/julia_work/stochastic-attention-study-paper/{if\\($0 ~ /^/\\) { stack[$0]++ } } /^/**)",
+      "Bash(done)"
     ]
   }
 }
