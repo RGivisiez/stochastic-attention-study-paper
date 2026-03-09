@@ -301,7 +301,7 @@ Table~\ref{tab:temp-spectrum-digit8} reported the corresponding metrics.
 
 \begin{table}[h]
 \centering
-\caption{Temperature spectrum for digit ``8'' ($K{=}100$, $d{=}784$, $\alpha{=}0.01$, 30 chains). $\mathrm{SNR}=\sqrt{\alpha\beta/2d}$ is the per-step signal-to-noise ratio; the synthetic transition occurs near $\mathrm{SNR}\approx 0.02$--$0.03$. As SNR falls through this band the sampler crosses from structured retrieval into diffuse generation. Values are mean $\pm$ SE across 30 chains.}
+\caption{Temperature spectrum for digit ``8'' ($K{=}100$, $d{=}784$, $\alpha{=}0.01$, 30 chains). $\mathrm{SNR}=\sqrt{\alpha\beta/2d}$ is the per-step signal-to-noise ratio; the transition occurs near $\mathrm{SNR}^{*}=\sqrt{\alpha/(2\sqrt{d})}$ (Proposition~\ref{prop:entropy-derivative}); at $d{=}784$ and $\alpha{=}0.01$ this gives $\mathrm{SNR}^{*}\approx 0.013$. As SNR falls through this region the sampler crosses from structured retrieval into diffuse generation. Values are mean $\pm$ SE across 30 chains.}
 \label{tab:temp-spectrum-digit8}
 \small
 \begin{tabular}{@{}rccccc@{}}
@@ -354,7 +354,7 @@ Table~\ref{tab:mnist-baselines} uses 30 independent chains each initialized near
 
 \begin{table}[h]
 \centering
-\caption{Single-chain vs.\ multi-chain diversity on digit ``3'' ($K{=}100$, $d{=}784$, $\alpha{=}0.01$). $\mathrm{SNR}=\sqrt{\alpha\beta/2d}$. The multi-chain row reproduces the SA entry from Table~\ref{tab:mnist-baselines}. The diversity gap of $0.318$ at $\mathrm{SNR}{=}0.113$ is the initialization contribution; single-chain diversity exceeds the multi-chain value once SNR falls toward the transition band ($0.02$--$0.03$).}
+\caption{Single-chain vs.\ multi-chain diversity on digit ``3'' ($K{=}100$, $d{=}784$, $\alpha{=}0.01$). $\mathrm{SNR}=\sqrt{\alpha\beta/2d}$. The multi-chain row reproduces the SA entry from Table~\ref{tab:mnist-baselines}. The diversity gap of $0.318$ at $\mathrm{SNR}{=}0.113$ is the initialization contribution; single-chain diversity exceeds the multi-chain value once SNR falls toward the entropy inflection point (Proposition~\ref{prop:entropy-derivative}).}
 \label{tab:single-chain}
 \small
 \begin{tabular}{@{}llccccc@{}}
@@ -707,3 +707,116 @@ GMM-PCA ($\mathcal{N}{=}0.198$, $\bar{\mathcal{D}}{=}0.419$).
 Smaller latent dimensions or larger $\beta_{\mathrm{KL}}$ values degraded novelty and
 diversity, while larger latent dimensions showed posterior collapse symptoms
 (diversity collapsing to $\bar{\mathcal{D}}{<}0.05$ at latent dim 32 with $\beta_{\mathrm{KL}}{=}0.01$).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Step-Size Sweep: ULA vs.\ MALA}\label{app:stepsize-sweep}
+% ─────────────────────────────────────────────────────────────────────────────
+
+At the operating point used throughout this paper ($\alpha{=}0.01$, $\beta{=}2000$), MALA acceptance exceeds $99\%$ and the two algorithms are trivially equivalent. A natural question is: \emph{at what step size does the ULA discretization bias become significant, and how does sample quality degrade?} We swept $\alpha\in\{0.001,0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5\}$ on MNIST digit~``3'' ($K{=}100$, $d{=}784$, $\beta{=}2000$), running 30 chains per method with the same protocol as the main MNIST experiment (Table~\ref{tab:mnist-baselines}).
+
+Table~\ref{tab:stepsize-sweep} and Figure~\ref{fig:stepsize-sweep} reveal three regimes:
+\begin{enumerate}
+  \item \textbf{Equivalent regime} ($\alpha\leq 0.02$): MALA acceptance $>97\%$; ULA and MALA metrics are indistinguishable ($\Delta E < 0.003$).
+  \item \textbf{Divergence regime} ($\alpha\in[0.05,0.1]$): acceptance drops to $75$--$91\%$; ULA bias becomes detectable but small ($\Delta\mathcal{N}\approx 0.007$, $\Delta E \approx 0.011$).
+  \item \textbf{MALA-frozen regime} ($\alpha\geq 0.2$): MALA acceptance collapses to $0\%$ — the chain freezes at its initialization — while ULA continues to produce samples with gracefully degrading quality (rising energy, increasing novelty as the noise term dominates).
+\end{enumerate}
+The practical divergence threshold is $\alpha\approx 0.1$ ($75\%$ acceptance, $\Delta E = 0.011$). At the paper's operating point ($\alpha{=}0.01$), ULA bias is negligible ($\Delta E = 0.0018$). At large step sizes, ULA is \emph{preferable} to MALA: MALA freezes entirely because the large Langevin proposals are almost always rejected, while ULA, which unconditionally accepts every proposal, continues to explore the energy landscape.
+
+\begin{table}[h]
+\centering
+\caption{Step-size sweep on MNIST digit ``3'' ($K{=}100$, $d{=}784$, $\beta{=}2000$). ULA and MALA are indistinguishable for $\alpha\leq 0.02$. At $\alpha\geq 0.2$, MALA acceptance collapses and the chain freezes, while ULA continues sampling.}
+\label{tab:stepsize-sweep}
+\small
+\begin{tabular}{@{}rcccccc@{}}
+\toprule
+$\alpha$ & Accept & \multicolumn{2}{c}{Novelty} & \multicolumn{2}{c}{Diversity} & $\Delta E$ \\
+ & rate & ULA & MALA & ULA & MALA & (ULA$-$MALA) \\
+\midrule
+0.001 & $>$0.99 & 0.152 & 0.152 & 0.597 & 0.597 & $<$0.001 \\
+0.005 & $>$0.99 & 0.152 & 0.152 & 0.599 & 0.599 & $<$0.001 \\
+0.01  & 0.992 & 0.152 & 0.152 & 0.600 & 0.600 & 0.002 \\
+0.02  & 0.972 & 0.153 & 0.153 & 0.601 & 0.601 & 0.003 \\
+0.05  & 0.908 & 0.156 & 0.153 & 0.604 & 0.600 & 0.006 \\
+0.1   & 0.752 & 0.163 & 0.156 & 0.610 & 0.602 & 0.011 \\
+0.2   & 0.000 & 0.189 & 0.000 & 0.633 & 0.000 & --- \\
+0.3   & 0.000 & 0.241 & 0.000 & 0.672 & 0.000 & --- \\
+0.5   & 0.000 & 0.384 & 0.000 & 0.762 & 0.000 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\IfFileExists{figs/Fig_stepsize_sweep_ula_vs_mala.pdf}{%
+  \includegraphics[width=0.95\textwidth]{figs/Fig_stepsize_sweep_ula_vs_mala.pdf}%
+}{%
+  \framebox[0.95\textwidth]{\rule{0pt}{4cm}\texttt{[Figure will be generated by run\_stepsize\_sweep.jl]}}%
+}
+\caption{Step-size sweep: ULA vs.\ MALA on MNIST digit ``3'' ($\beta{=}2000$). \textbf{(a)}~MALA acceptance rate vs.\ step size $\alpha$. Acceptance exceeds $95\%$ for $\alpha\leq 0.02$ and collapses to $0\%$ at $\alpha\geq 0.2$. \textbf{(b)}~Absolute difference between ULA and MALA metrics. All three metrics (novelty, diversity, energy) diverge smoothly as $\alpha$ increases through the $[0.05,0.1]$ band.}
+\label{fig:stepsize-sweep}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Gaussian Noise Control at $\beta{=}200$}\label{app:noise-control}
+% ─────────────────────────────────────────────────────────────────────────────
+
+At $\beta{=}200$ (SNR$=0.036$, the generation regime), SA achieves high novelty ($0.547$) and diversity ($0.885$) but the mean Hopfield energy is positive ($+1.47$), meaning samples lie outside the attractor manifold. A natural concern is that these metrics could be achieved trivially by high-temperature noise that bears no structural relationship to the stored patterns. We test this by comparing SA against two Gaussian noise controls on MNIST digit~``3'' ($K{=}100$, $d{=}784$).
+
+\paragraph{Controls.}
+\emph{Matched Gaussian}: for each pixel $j$, we estimate the mean $\mu_j$ and variance $\sigma_j^2$ of the 150 SA samples and draw i.i.d.\ $\mathcal{N}(\mu_j, \sigma_j^2)$ — this is the strongest possible Gaussian that matches SA's marginal pixel statistics. \emph{Isotropic Gaussian}: we draw $\mathbf{g}\sim\mathcal{N}(\mathbf{0},\mathbf{I}_d)$ and rescale to match the mean norm of SA samples ($\lVert\boldsymbol{\xi}\rVert\approx 2.22$). Both controls produce 150 samples.
+
+\paragraph{Results.}
+Table~\ref{tab:noise-control} and Figure~\ref{fig:noise-control} present the comparison. The key separating metric is \emph{maximum cosine similarity} to the nearest stored pattern (Max-$\cos$): SA retains $0.453$, meaning each sample sits roughly halfway between the stored-pattern manifold ($1.0$) and random directions (${\approx}0.06$ in $\mathbb{R}^{784}$). The matched Gaussian achieves only $0.328$ despite sharing SA's per-pixel moments, and isotropic noise achieves $0.057$ (the random-direction baseline). Hopfield energy separates the methods in the same order: SA ($1.47$) $<$ matched Gaussian ($1.78$) $<$ isotropic ($2.34$).
+
+Novelty and diversity, by contrast, are similar between SA and the matched Gaussian ($0.547$ vs.\ $0.672$ and $0.885$ vs.\ $0.878$), confirming the reviewer's observation that these metrics alone do not distinguish structured generation from noise. However, the max-cosine and energy metrics do: SA samples are geometrically closer to stored patterns because the Langevin dynamics is guided by the Hopfield energy gradient, which biases the chain toward the memory manifold even at high temperature. Gaussian noise, lacking this gradient signal, cannot achieve the same structural similarity.
+
+Visually (Figure~\ref{fig:noise-control}), SA samples show faint but recognizable digit-3 structure (curved strokes, characteristic topology), while both Gaussian controls produce uniform static with no discernible spatial structure.
+
+We note honestly that $\beta{=}200$ is a high-temperature regime where sample quality is limited: the noise term $\sqrt{2\alpha/\beta}\,\boldsymbol{\epsilon}$ has standard deviation $0.01$ per component, comparable to the gradient step. The samples are ``blurry-but-recognizable'' rather than crisp. Higher-fidelity generation requires operating closer to the transition band ($\beta{\approx}500$--$1000$), trading novelty for structural quality.
+
+\begin{table}[h]
+\centering
+\caption{Gaussian noise control on MNIST digit ``3'' at $\beta{=}200$ (generation regime). Max-$\cos$ and energy cleanly separate SA from both Gaussian controls: SA samples retain structural similarity to stored patterns that noise cannot replicate. FD$_{\text{diag}}$ is the diagonal pixel-space Fr\'{e}chet distance to stored patterns.}
+\label{tab:noise-control}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Method & $\mathcal{N}$ $\uparrow$ & $\bar{\mathcal{D}}$ $\uparrow$ & $\bar{E}$ $\downarrow$ & Max-$\cos$ $\uparrow$ & FD$_{\text{diag}}$ $\downarrow$ \\
+\midrule
+Stored patterns                   & 0.000 & 0.459 & $-0.50$ & 1.000 & ---  \\
+\textbf{SA ($\beta{=}200$)}       & 0.547 & 0.885 & $+1.47$ & 0.453 & 2.81 \\
+Gaussian (matched $\mu,\sigma^2$) & 0.672 & 0.878 & $+1.78$ & 0.328 & 2.86 \\
+Gaussian (isotropic)              & 0.943 & 1.000 & $+2.34$ & 0.057 & 3.91 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.19\textwidth]{figs/Fig_noise_control_stored.png}%
+\hfill
+\includegraphics[width=0.19\textwidth]{figs/Fig_noise_control_sa_beta200.png}%
+\hfill
+\includegraphics[width=0.19\textwidth]{figs/Fig_noise_control_gauss_matched.png}%
+\hfill
+\includegraphics[width=0.19\textwidth]{figs/Fig_noise_control_gauss_iso.png}%
+\hfill
+\IfFileExists{figs/Fig_noise_control_maxcos_hist.pdf}{%
+  \includegraphics[width=0.19\textwidth]{figs/Fig_noise_control_maxcos_hist.pdf}%
+}{%
+  \framebox[0.19\textwidth]{\rule{0pt}{3cm}\small hist}%
+}
+
+\small
+\makebox[0.19\textwidth]{\centering (a) Stored}%
+\hfill
+\makebox[0.19\textwidth]{\centering (b) SA ($\beta{=}200$)}%
+\hfill
+\makebox[0.19\textwidth]{\centering (c) Gauss (matched)}%
+\hfill
+\makebox[0.19\textwidth]{\centering (d) Gauss (iso)}%
+\hfill
+\makebox[0.19\textwidth]{\centering (e) Max-$\cos$ dist.}
+\caption{Gaussian noise control. \textbf{(a)}~Stored digit ``3'' patterns. \textbf{(b)}~SA at $\beta{=}200$: noisy but spatially structured (curved strokes visible). \textbf{(c)}~Matched Gaussian (same per-pixel $\mu$ and $\sigma^2$ as SA): uniform static, no digit structure. \textbf{(d)}~Isotropic Gaussian (matched norm): pure noise. \textbf{(e)}~Distribution of max cosine similarity to nearest stored pattern: SA (blue) is clearly shifted right of both Gaussian controls, confirming that the Hopfield energy gradient preserves structural similarity that noise cannot replicate.}
+\label{fig:noise-control}
+\end{figure}

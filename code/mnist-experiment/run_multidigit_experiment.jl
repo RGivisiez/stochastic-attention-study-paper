@@ -8,7 +8,7 @@
 
 @info "Loading environment …"
 include(joinpath(@__DIR__, "Include-MNIST.jl"))
-using Images, ImageIO
+using Images, ImageIO, Flux
 @info "Environment loaded."
 
 # ── decode helper (same as notebook) ──────────────────────────────────────────
@@ -113,6 +113,12 @@ const T_burnin = 2000
 const thin_interval = 100
 const samples_per_chain = 5
 const σ_init = 0.01
+
+# ── VAE struct (defined once, used per-digit) ─────────────────────────────
+struct _MnistVAE
+    enc_shared; enc_μ; enc_logσ²; dec
+end
+Flux.@layer _MnistVAE
 
 # ── Load MNIST ────────────────────────────────────────────────────────────────
 @info "Loading MNIST data …"
@@ -225,12 +231,63 @@ function run_digit_experiment(digit::Int; digits_image_dictionary, figpath)
     gmm_samples = [vec(MultivariateStats.reconstruct(pca_model, z)) for z in pca_samps]
     @info "  GMM-PCA: $(length(gmm_samples)) samples"
 
+    # ── VAE baseline ──────────────────────────────────────────────────────────
+    @info "  Training VAE (latent=8, two-phase) …"
+    local VAE_LAT = 8
+    local VAE_P1 = 2000
+    local VAE_P2 = 2000
+
+    mvae = _MnistVAE(
+        Chain(Dense(number_of_pixels => 256, relu), Dense(256 => 128, relu)),
+        Dense(128 => VAE_LAT),
+        Dense(128 => VAE_LAT),
+        Chain(Dense(VAE_LAT => 128, relu), Dense(128 => 256, relu), Dense(256 => number_of_pixels))
+    )
+    X_train_vae = Float32.(X̂)
+    opt_vae = Flux.setup(Adam(1f-3), mvae)
+
+    # Phase 1: autoencoder
+    for epoch in 1:VAE_P1
+        ε = randn(Float32, VAE_LAT, K)
+        loss, grads = Flux.withgradient(mvae) do m
+            h = m.enc_shared(X_train_vae)
+            μ = m.enc_μ(h); lσ² = m.enc_logσ²(h)
+            z = μ .+ exp.(0.5f0 .* lσ²) .* ε
+            o = m.dec(z)
+            x̂ = o ./ (sqrt.(sum(o .^ 2; dims=1)) .+ 1f-8)
+            mean(sum((X_train_vae .- x̂) .^ 2; dims=1))
+        end
+        Flux.update!(opt_vae, mvae, grads[1])
+    end
+    # Phase 2: KL warmup
+    for epoch in 1:VAE_P2
+        kl_w = 0.0001f0 * Float32(epoch) / Float32(VAE_P2)
+        ε = randn(Float32, VAE_LAT, K)
+        loss, grads = Flux.withgradient(mvae) do m
+            h = m.enc_shared(X_train_vae)
+            μ = m.enc_μ(h); lσ² = m.enc_logσ²(h)
+            z = μ .+ exp.(0.5f0 .* lσ²) .* ε
+            o = m.dec(z)
+            x̂ = o ./ (sqrt.(sum(o .^ 2; dims=1)) .+ 1f-8)
+            recon = mean(sum((X_train_vae .- x̂) .^ 2; dims=1))
+            kl = -0.5f0 * mean(sum(1f0 .+ lσ² .- μ .^ 2 .- exp.(lσ²); dims=1))
+            recon + kl_w * kl
+        end
+        Flux.update!(opt_vae, mvae, grads[1])
+    end
+    Random.seed!(9999 + digit)
+    Z_vae = randn(Float32, VAE_LAT, S)
+    raw_vae = let o = mvae.dec(Z_vae); o ./ (sqrt.(sum(o .^ 2; dims=1)) .+ 1f-8) end
+    vae_samples = [Float64.(raw_vae[:, i]) for i in 1:S]
+    @info "  VAE: $(length(vae_samples)) samples"
+
     # ── Compute metrics with per-chain SEs ──────────────────────────────────
     methods = [
         "Bootstrap (replay)"       => bs_samples,
         "Gaussian perturbation"    => gp_samples,
         "Random convex combination"=> rc_samples,
         "GMM-PCA"                  => gmm_samples,
+        "VAE (latent=8)"           => vae_samples,
         "MALA"                     => mala_samples,
         "Stochastic attention"     => sa_samples,
     ]
@@ -282,6 +339,7 @@ function run_digit_experiment(digit::Int; digits_image_dictionary, figpath)
         ("gaussian",  gp_samples),
         ("convex",    rc_samples),
         ("gmm_pca",   gmm_samples),
+        ("vae",       vae_samples),
         ("mala",      mala_samples),
         ("sa",        sa_samples),
     ]

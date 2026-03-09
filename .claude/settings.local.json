@@ -3,7 +3,15 @@
     "allow": [
       "Bash(python3:*)",
       "Read(//Users/jdv27/Desktop/julia_work/stochastic-attention-study-paper/{if\\($0 ~ /^/\\) { stack[$0]++ } } /^/**)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(pdflatex:*)",
+      "Bash(for dir in mnist-experiment financial-experiment simpsons-experiment vae-experiment sequence-experiment)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Read(//Users/jdv27/Desktop/julia_work/stochastic-attention-study-paper/code/**)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(julia:*)",
+      "Bash(cp:*)"
     ]
   }
 }
