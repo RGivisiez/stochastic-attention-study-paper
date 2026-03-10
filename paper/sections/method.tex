@@ -3,7 +3,7 @@
 The background section established three facts: (i) attention is one step of gradient descent on the modern Hopfield energy $E$, (ii) $E$ is smooth and confining, and (iii) Langevin dynamics converts any smooth, confining energy into a sampler for the corresponding Boltzmann distribution. We now combine these facts to derive \emph{stochastic attention}, a single update rule that interpolates between deterministic memory retrieval and stochastic generation of novel states.
 
 \subsection{Stochastic Attention Update}
-Recall the setup from Section~3: the memory matrix $\mathbf{X}=[\mathbf{m}_1,\dots,\mathbf{m}_K]\in\mathbb{R}^{N\times K}$ has $K$ stored memories as its columns, each of dimension $N$. We wish to sample from the Boltzmann distribution induced by the modern Hopfield energy~\eqref{eq:modern-hopfield-energy}:
+Recall the setup from Section~3: the memory matrix $\mathbf{X}=[\mathbf{m}_1,\dots,\mathbf{m}_K]\in\mathbb{R}^{d\times K}$ has $K$ stored memories as its columns, each of dimension $d$. We wish to sample from the Boltzmann distribution induced by the modern Hopfield energy~\eqref{eq:modern-hopfield-energy}:
 \begin{equation}\label{eq:boltzmann-hopfield}
     p_\beta(\boldsymbol{\xi})
     \;\propto\; \exp\!\bigl(-\beta\, E(\boldsymbol{\xi})\bigr),
@@ -25,17 +25,17 @@ which, after collecting terms, takes the form
       + \sqrt{\tfrac{2\alpha}{\beta}}\;\boldsymbol{\epsilon}_t
     \;}
 \end{equation}
-This is the \emph{stochastic attention} update. Each iteration performs three operations: a contraction toward the origin (the $(1-\alpha)\boldsymbol{\xi}_t$ term), a softmax-weighted pull toward stored memories (the attention term), and an isotropic Gaussian perturbation whose magnitude is governed by the temperature $1/\beta$. The complete procedure is given as pseudocode in Algorithm~\ref{alg:stochastic-attention}. Because the memory matrix $\mathbf{X}$ is fixed and known, each step requires only the same primitive operations as a single attention head: two matrix-vector products, one softmax, and one Gaussian draw, for a per-step cost of $\mathcal{O}(NK)$.
+This is the \emph{stochastic attention} update. Each iteration performs three operations: a contraction toward the origin (the $(1-\alpha)\boldsymbol{\xi}_t$ term), a softmax-weighted pull toward stored memories (the attention term), and an isotropic Gaussian perturbation whose magnitude is governed by the temperature $1/\beta$. The complete procedure is given as pseudocode in Algorithm~\ref{alg:stochastic-attention}. Because the memory matrix $\mathbf{X}$ is fixed and known, each step requires only the same primitive operations as a single attention head: two matrix-vector products, one softmax, and one Gaussian draw, for a per-step cost of $\mathcal{O}(dK)$.
 
 
 \begin{algorithm}[t]
 \caption{Stochastic Attention Sampler}\label{alg:stochastic-attention}
 \begin{algorithmic}[1]
-\REQUIRE Memory matrix $\mathbf{X}\in\mathbb{R}^{N\times K}$, inverse temperature $\beta>0$, step size $\alpha\in(0,1)$, number of iterations $T$, initial state $\boldsymbol{\xi}_0\in\mathbb{R}^N$
+\REQUIRE Memory matrix $\mathbf{X}\in\mathbb{R}^{d\times K}$, inverse temperature $\beta>0$, step size $\alpha\in(0,1)$, number of iterations $T$, initial state $\boldsymbol{\xi}_0\in\mathbb{R}^d$
 \ENSURE Sample trajectory $\boldsymbol{\xi}_0,\boldsymbol{\xi}_1,\dots,\boldsymbol{\xi}_T$
 \FOR{$t = 0,1,\dots,T-1$}
     \STATE $\mathbf{a}_t \leftarrow \operatorname{softmax}\!\bigl(\beta\,\mathbf{X}^{\top}\boldsymbol{\xi}_t\bigr)$ \hfill $\triangleright$ attention weights
-    \STATE $\boldsymbol{\epsilon}_t \sim \mathcal{N}(\mathbf{0},\mathbf{I}_N)$
+    \STATE $\boldsymbol{\epsilon}_t \sim \mathcal{N}(\mathbf{0},\mathbf{I}_d)$
     \STATE $\boldsymbol{\xi}_{t+1} \leftarrow (1-\alpha)\,\boldsymbol{\xi}_t + \alpha\,\mathbf{X}\,\mathbf{a}_t + \sqrt{2\alpha/\beta}\;\boldsymbol{\epsilon}_t$
 \ENDFOR
 \end{algorithmic}
@@ -49,7 +49,7 @@ When $\beta\to\infty$ and the noise vanishes, the softmax sharpens to a hard $\a
 Beyond these limiting behaviors, the sampler inherits concrete guarantees from the analytic structure of the Hopfield energy. Because the gradient $\nabla E(\boldsymbol{\xi})=\boldsymbol{\xi}-\mathbf{T}(\boldsymbol{\xi})$ is computed exactly by a single attention operation, the score function $\nabla\log p_\beta = \beta(\mathbf{T}-\boldsymbol{\xi})$ is known in closed form; no auxiliary score network is needed. The following proposition (proved in Appendix~\ref{app:proof-regularity}) makes the regularity conditions from Section~3 explicit.
 
 \begin{proposition}\label{prop:regularity}
-Let $\sigma_{\max}=\|\mathbf{X}\|_{\mathrm{op}}$ denote the largest singular value of the memory matrix. The modern Hopfield energy~\eqref{eq:modern-hopfield-energy} has Lipschitz-continuous gradient with constant $L = 1 + \beta\sigma_{\max}^{2}/2$ and satisfies the dissipativity condition $\langle \nabla E(\boldsymbol{\xi}),\boldsymbol{\xi}\rangle \ge \|\boldsymbol{\xi}\|_2^2/2 - M^2/2$ for all $\boldsymbol{\xi}\in\mathbb{R}^N$.
+Let $\sigma_{\max}=\|\mathbf{X}\|_{\mathrm{op}}$ denote the largest singular value of the memory matrix. The modern Hopfield energy~\eqref{eq:modern-hopfield-energy} has Lipschitz-continuous gradient with constant $L = 1 + \beta\sigma_{\max}^{2}/2$ and satisfies the dissipativity condition $\langle \nabla E(\boldsymbol{\xi}),\boldsymbol{\xi}\rangle \ge \|\boldsymbol{\xi}\|_2^2/2 - M^2/2$ for all $\boldsymbol{\xi}\in\mathbb{R}^d$.
 \end{proposition}
 
 The Lipschitz constant grows linearly in $\beta$: the energy landscape sharpens at low temperature and step-size selection becomes more delicate. The Hessian satisfies $\nabla^2 E \succeq (1-\beta\sigma_{\max}^{2}/2)\mathbf{I}$, so $E$ is strictly convex when $\beta\sigma_{\max}^{2}<2$. This condition characterizes the \emph{convex regime} of the Hopfield energy and yields a standard ULA convergence result:
@@ -74,7 +74,7 @@ Because $\mathbf{X}$ is given as data, there are no learned parameters: no train
 The attention entropy $H(\beta) = -\sum_k p_k \log p_k$, where $p_k = \operatorname{softmax}(\beta\mathbf{X}^{\top}\boldsymbol{\xi})_k$, quantifies the selectivity of the attention distribution for a given state~$\boldsymbol{\xi}$. At $\beta=0$ the distribution is uniform and $H=\log K$; as $\beta\to\infty$ it concentrates on the nearest memory and $H\to 0$. The following identity governs the rate of this transition.
 
 \begin{proposition}\label{prop:entropy-derivative}
-For fixed $\boldsymbol{\xi}\in\mathbb{R}^N$, let $e_k = \mathbf{m}_k^{\top}\boldsymbol{\xi}$ and $\mathbf{p}=\operatorname{softmax}(\beta\mathbf{e})$. Then
+For fixed $\boldsymbol{\xi}\in\mathbb{R}^d$, let $e_k = \mathbf{m}_k^{\top}\boldsymbol{\xi}$ and $\mathbf{p}=\operatorname{softmax}(\beta\mathbf{e})$. Then
 \begin{equation}\label{eq:entropy-deriv}
 \frac{dH}{d\beta} \;=\; -\beta\,\mathrm{Var}_{\mathbf{p}}(e),
 \end{equation}
@@ -92,12 +92,12 @@ Since $\mathrm{Var}_{\mathbf{p}}(e)\ge 0$, entropy decreases monotonically with 
 where $\mu_3 = \langle(e - \langle e\rangle_{\mathbf{p}})^3\rangle_{\mathbf{p}}$ is the third central moment of the similarities under the attention distribution. This inflection marks the retrieval--generation phase boundary: below $\beta^{*}$, attention remains diffuse (generation); above it, attention concentrates on individual memories (retrieval).
 
 \paragraph{Scaling for random memories.}
-When the $K$ memories are drawn uniformly on the unit sphere $\mathbb{S}^{N-1}$, the similarities $e_k$ are approximately iid with $\mathrm{Var}(e_k)=1/N$. The softmax logits $\beta e_k$ have standard deviation $\beta/\sqrt{N}$; the transition from near-uniform to concentrated attention occurs when this standard deviation reaches order unity, giving
+When the $K$ memories are drawn uniformly on the unit sphere $\mathbb{S}^{d-1}$, the similarities $e_k$ are approximately iid with $\mathrm{Var}(e_k)=1/d$. The softmax logits $\beta e_k$ have standard deviation $\beta/\sqrt{d}$; the transition from near-uniform to concentrated attention occurs when this standard deviation reaches order unity, giving
 \begin{equation}\label{eq:beta-star-scaling}
-\beta^{*} \;\sim\; \sqrt{N}.
+\beta^{*} \;\sim\; \sqrt{d}.
 \end{equation}
 Substituting into the per-step signal-to-noise ratio (Eq.~\ref{eq:snr}) yields a scaling law for the critical SNR:
 \begin{equation}\label{eq:snr-star}
-\mathrm{SNR}^{*} \;=\; \sqrt{\frac{\alpha\,\beta^{*}}{2N}} \;\sim\; \sqrt{\frac{\alpha}{2\sqrt{N}}}\,.
+\mathrm{SNR}^{*} \;=\; \sqrt{\frac{\alpha\,\beta^{*}}{2d}} \;\sim\; \sqrt{\frac{\alpha}{2\sqrt{d}}}\,.
 \end{equation}
-At $N{=}64$ and $\alpha{=}0.01$ this evaluates to $\mathrm{SNR}^{*}=\sqrt{0.01/16}=0.025$, exactly matching the empirical transition observed in Section~5. The threshold is not a universal constant: it scales as $N^{-1/4}$ and depends on the pattern geometry through $\mathrm{Var}(e_k)$. For structured data the effective variance may differ substantially from $1/N$, but Eq.~\eqref{eq:inflection} provides a fully data-dependent criterion that applies in any domain: evaluate $d^{2}H/d\beta^{2}$ over a sweep of $\beta$ values and locate the zero crossing.
+At $d{=}64$ and $\alpha{=}0.01$ this evaluates to $\mathrm{SNR}^{*}=\sqrt{0.01/16}=0.025$, exactly matching the empirical transition observed in Section~5. The threshold is not a universal constant: it scales as $d^{-1/4}$ and depends on the pattern geometry through $\mathrm{Var}(e_k)$. For structured data the effective variance may differ substantially from $1/d$, but Eq.~\eqref{eq:inflection} provides a fully data-dependent criterion that applies in any domain: evaluate $d^{2}H/d\beta^{2}$ over a sweep of $\beta$ values and locate the zero crossing.

@@ -133,7 +133,7 @@ We show that the gradient of the \textbf{modern Hopfield energy} is exactly the 
 \end{center}
 
 \vspace{2pt}
-The critical temperature $\beta^{\star}$ marks the retrieval--generation boundary, identified analytically via an entropy inflection condition: $\beta^{\star}\!\sim\!\sqrt{N}$ for random unit-norm memories.
+The critical temperature $\beta^{\star}$ marks the retrieval--generation boundary, identified analytically via an entropy inflection condition: $\beta^{\star}\!\sim\!\sqrt{d}$ for random unit-norm memories.
 \textbf{No score network, no training loop, no contrastive objective}:the score is the attention map itself.
 \end{block}
 
@@ -172,7 +172,7 @@ Substituting $\nabla E$ into the ULA (with $U = \beta E$, $\tilde\alpha = \alpha
 \begin{itemize}[leftmargin=1.2em, itemsep=1pt]
   \item \textbf{Step cost:} $\mathcal{O}(NK)$:same as one attention head; no training required.
   \item \textbf{Convergence:} $W_2$-geometric in the convex regime ($\beta\sigma_{\max}^2 < 2$); MALA acceptance $= 99.2\%$ at $\alpha\!=\!0.01$ confirms negligible discretization bias.
-  \item \textbf{Temperature selection:} $\beta^*$ via entropy inflection $d^2H/d\beta^2\!=\!0$; scales as $\beta^*\!\sim\!\sqrt{N}$.
+  \item \textbf{Temperature selection:} $\beta^*$ via entropy inflection $d^2H/d\beta^2\!=\!0$; scales as $\beta^*\!\sim\!\sqrt{d}$.
 \end{itemize}
 \end{block}
 
@@ -187,7 +187,7 @@ Does $\beta$ really act as a continuous order parameter between generation and r
 \end{center}
 {\small
 \textbf{(a)} $d\!=\!64$, $K\!=\!16$.
-Cosine similarity (blue) and scaled entropy (coral) exhibit a smooth sigmoidal transition centered at $\beta\!\approx\!5$--$10$ (gold band), consistent with the predicted $\beta^*\!\sim\!\sqrt{N}$.\\[2pt]
+Cosine similarity (blue) and scaled entropy (coral) exhibit a smooth sigmoidal transition centered at $\beta\!\approx\!5$--$10$ (gold band), consistent with the predicted $\beta^*\!\sim\!\sqrt{d}$.\\[2pt]
 \textbf{(b)} $d\!=\!8$, $K\!=\!4$, $\beta\!=\!5$.
 Eight independent chains (gray) converge to a long-run reference (coral); KS statistic confirms the correct Boltzmann target.
 }
@@ -289,7 +289,7 @@ SA matches the VAE on novelty while achieving $\mathbf{6.9\times}$ lower amino a
 % -----------------------------------------------------------
 \begin{block}{Experiment 4:Scaling to Face Images --- Simpsons ($d=4{,}096$)}
 % -----------------------------------------------------------
-Does SA still work when we scale to high-dimensional image data, and does the $\beta^*\!\sim\!\sqrt{N}$ rule remain a reliable guide for temperature selection?
+Does SA still work when we scale to high-dimensional image data, and does the $\beta^*\!\sim\!\sqrt{d}$ rule remain a reliable guide for temperature selection?
 
 \vspace{4pt}
 \begin{columns}[c, totalwidth=\linewidth]

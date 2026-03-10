@@ -17,14 +17,14 @@ The gradient is $\nabla E(\boldsymbol{\xi})=\boldsymbol{\xi}-\mathbf{T}(\boldsym
 which is the covariance matrix of a categorical distribution with probabilities~$\mathbf{p}$. By the chain rule ($\partial\mathbf{z}/\partial\boldsymbol{\xi}=\beta\mathbf{X}^{\top}$):
 \begin{equation}\label{eq:hessian}
     \nabla^{2}E(\boldsymbol{\xi})
-    = \mathbf{I}_{N} - \beta\,\mathbf{X}\,\mathbf{S}\bigl(\mathbf{p}(\boldsymbol{\xi})\bigr)\,\mathbf{X}^{\top}.
+    = \mathbf{I}_{d} - \beta\,\mathbf{X}\,\mathbf{S}\bigl(\mathbf{p}(\boldsymbol{\xi})\bigr)\,\mathbf{X}^{\top}.
 \end{equation}
 
 \paragraph{Part (i): Lipschitz gradient.}
 The Lipschitz constant of $\nabla E$ equals $\sup_{\boldsymbol{\xi}}\|\nabla^{2}E(\boldsymbol{\xi})\|_{\mathrm{op}}$. Because $\mathbf{S}(\mathbf{p})$ is a covariance matrix it is positive semidefinite, so $\beta\mathbf{X}\mathbf{S}\mathbf{X}^{\top}\succeq\mathbf{0}$. By the triangle inequality for the spectral norm,
 \begin{equation}\label{eq:lip-triangle}
     \|\nabla^{2}E(\boldsymbol{\xi})\|_{\mathrm{op}}
-    \;\le\; \|\mathbf{I}_{N}\|_{\mathrm{op}}
+    \;\le\; \|\mathbf{I}_{d}\|_{\mathrm{op}}
             + \beta\,\|\mathbf{X}\,\mathbf{S}(\mathbf{p})\,\mathbf{X}^{\top}\|_{\mathrm{op}}
     \;\le\; 1 + \beta\,\sigma_{\max}^{2}\,\|\mathbf{S}(\mathbf{p})\|_{\mathrm{op}},
 \end{equation}
@@ -111,12 +111,12 @@ Algorithm~\ref{alg:stochastic-attention} uses the Unadjusted Langevin Algorithm 
 \begin{algorithm}[h]
 \caption{MALA Stochastic Attention Sampler}\label{alg:mala}
 \begin{algorithmic}[1]
-\REQUIRE Memory matrix $\mathbf{X}\in\mathbb{R}^{N\times K}$, inverse temperature $\beta>0$, step size $\alpha\in(0,1)$, iterations $T$, initial state $\boldsymbol{\xi}_0\in\mathbb{R}^N$
+\REQUIRE Memory matrix $\mathbf{X}\in\mathbb{R}^{d\times K}$, inverse temperature $\beta>0$, step size $\alpha\in(0,1)$, iterations $T$, initial state $\boldsymbol{\xi}_0\in\mathbb{R}^d$
 \ENSURE Sample trajectory $\boldsymbol{\xi}_0,\boldsymbol{\xi}_1,\dots,\boldsymbol{\xi}_T$
 \FOR{$t = 0,1,\dots,T-1$}
     \STATE $\mathbf{a}_t \leftarrow \operatorname{softmax}\!\bigl(\beta\,\mathbf{X}^{\top}\boldsymbol{\xi}_t\bigr)$ \hfill $\triangleright$ attention weights at current state
     \STATE $\boldsymbol{\mu}_t \leftarrow (1-\alpha)\,\boldsymbol{\xi}_t + \alpha\,\mathbf{X}\,\mathbf{a}_t$ \hfill $\triangleright$ Langevin proposal mean
-    \STATE $\boldsymbol{\epsilon}_t \sim \mathcal{N}(\mathbf{0},\mathbf{I}_N)$
+    \STATE $\boldsymbol{\epsilon}_t \sim \mathcal{N}(\mathbf{0},\mathbf{I}_d)$
     \STATE $\boldsymbol{\xi}^{\star} \leftarrow \boldsymbol{\mu}_t + \sqrt{2\alpha/\beta}\;\boldsymbol{\epsilon}_t$ \hfill $\triangleright$ candidate state
     \STATE $\mathbf{a}^{\star} \leftarrow \operatorname{softmax}\!\bigl(\beta\,\mathbf{X}^{\top}\boldsymbol{\xi}^{\star}\bigr)$ \hfill $\triangleright$ attention weights at candidate
     \STATE $\boldsymbol{\mu}^{\star} \leftarrow (1-\alpha)\,\boldsymbol{\xi}^{\star} + \alpha\,\mathbf{X}\,\mathbf{a}^{\star}$ \hfill $\triangleright$ reverse proposal mean
