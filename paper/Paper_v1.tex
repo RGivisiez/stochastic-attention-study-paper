@@ -25,26 +25,26 @@
 
 % After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
 % 1. Main Track
- % \usepackage[main, final]{neurips_2025}
+ % \usepackage[main, final]{neurips_2026}
 % 2. Position Paper Track
-%  \usepackage[position, final]{neurips_2025}
+%  \usepackage[position, final]{neurips_2026}
 % 3. Datasets & Benchmarks Track
- % \usepackage[dandb, final]{neurips_2025}
+ % \usepackage[dandb, final]{neurips_2026}
 % 4. Creative AI Track
-%  \usepackage[creativeai, final]{neurips_2025}
+%  \usepackage[creativeai, final]{neurips_2026}
 % 5. Workshop with single-blind reviewing
-%  \usepackage[sglblindworkshop, final]{neurips_2025}
+%  \usepackage[sglblindworkshop, final]{neurips_2026}
 % 6. Workshop with double-blind reviewing
-%  \usepackage[dblblindworkshop, final]{neurips_2025}
+%  \usepackage[dblblindworkshop, final]{neurips_2026}
 % Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
 % For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
 % \workshoptitle{WORKSHOP TITLE}
 
 % "preprint" option is used for arXiv or other preprint submissions
- % \usepackage[preprint]{neurips_2025}
+ % \usepackage[preprint]{neurips_2026}
 
 % to avoid loading the natbib package, add option nonatbib:
-%    \usepackage[nonatbib]{neurips_2025}
+%    \usepackage[nonatbib]{neurips_2026}
 
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
@@ -100,7 +100,7 @@
 \maketitle
 
 \begin{abstract}
-Attention heads retrieve: given a query, they return a softmax-weighted average of stored values. We show that this computation is one step of gradient descent on a classical energy function, and that Langevin sampling from the corresponding distribution yields \emph{stochastic attention}: a training-free sampler controlled by a single temperature. Lowering the temperature gives exact retrieval; raising it gives open-ended generation. Because the energy gradient equals the attention map, no score network, training loop, or learned model is required. We derive a closed-form entropy inflection condition that identifies the retrieval-to-generation transition temperature for any memory geometry, with a scaling law $\beta^*\!\sim\!\sqrt{N}$ for random patterns. We validate on five domains (64 to 4,096 dimensions). On MNIST digit images, stochastic attention is $2.6{\times}$ more novel and $2.0{\times}$ more diverse than the best learned baseline (a VAE trained on the same patterns), while matching a Metropolis-corrected gold standard. On protein sequences from the Pfam RRM family, the generation regime achieves $6.9{\times}$ lower amino acid composition divergence than the VAE (KL $= 0.060$ vs.\ $0.416$) at matched novelty, demonstrating that the training-free score function preserves family-level fidelity that learned models lose. A denoising diffusion baseline (DDPM) fails across all memory sizes tested ($K = 100$ to $3{,}500$), producing samples indistinguishable from isotropic noise. The approach requires no architectural changes to the underlying attention mechanism.
+Attention heads retrieve: given a query, they return a softmax-weighted average of stored values. We show that this computation is one step of gradient descent on a classical energy function, and that Langevin sampling from the corresponding distribution yields \emph{stochastic attention}: a training-free sampler controlled by a single temperature. Lowering the temperature gives exact retrieval; raising it gives open-ended generation. Because the energy gradient equals the attention map, no score network, training loop, or learned model is required. We derive a closed-form entropy inflection condition that identifies the retrieval-to-generation transition temperature for any memory geometry, with a scaling law $\beta^*\!\sim\!\sqrt{d}$ for random patterns. We validate on five domains (64 to 4,096 dimensions). On MNIST digit images, stochastic attention is $2.6{\times}$ more novel and $2.0{\times}$ more diverse than the best learned baseline (a VAE trained on the same patterns), while matching a Metropolis-corrected gold standard. On protein sequences from the Pfam RRM family, the generation regime achieves $6.9{\times}$ lower amino acid composition divergence than the VAE (KL $= 0.060$ vs.\ $0.416$) at matched novelty, demonstrating that the training-free score function preserves family-level fidelity that learned models lose. A denoising diffusion baseline (DDPM) fails across all memory sizes tested ($K = 100$ to $3{,}500$), producing samples indistinguishable from isotropic noise. The approach requires no architectural changes to the underlying attention mechanism.
 \end{abstract}
 
 

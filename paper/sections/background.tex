@@ -21,7 +21,7 @@ The classical Hopfield network~\cite{hopfieldNeuralNetworksPhysical1982} stores 
     = -\tfrac{1}{2}\,\mathbf{s}^{\top}\mathbf{W}\mathbf{s}
       - \mathbf{b}^{\top}\mathbf{s},
     \qquad
-    \mathbf{W} = \frac{1}{N}\sum_{i=1}^{K}\mathbf{m}_i\mathbf{m}_i^{\top},
+    \mathbf{W} = \frac{1}{d}\sum_{i=1}^{K}\mathbf{m}_i\mathbf{m}_i^{\top},
 \end{equation}
 where $\mathbf{b}\in\mathbb{R}^d$ is an external bias (typically set to zero). Retrieval proceeds by coordinate-wise sign updates that descend $E_{\mathrm{classical}}$. The storage capacity of this network scales as $\mathcal{O}(d)$~\cite{amitStoringInfiniteNumbers1985}, severely limiting the number of patterns.
 

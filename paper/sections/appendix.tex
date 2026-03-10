@@ -133,7 +133,7 @@ Algorithm~\ref{alg:stochastic-attention} uses the Unadjusted Langevin Algorithm 
 \end{algorithmic}
 \end{algorithm}
 
-Compared with Algorithm~\ref{alg:stochastic-attention}, MALA replaces the single-line state update (line~4) with a propose-then-correct cycle (lines~2--13). The additional cost per step is one extra attention evaluation (line~6) and one energy evaluation (line~8), doubling the per-iteration $\mathcal{O}(NK)$ cost. In the limit $\alpha\to 0$ both algorithms coincide; at moderate $\alpha$ the accept/reject step removes $O(\alpha)$ discretization bias.
+Compared with Algorithm~\ref{alg:stochastic-attention}, MALA replaces the single-line state update (line~4) with a propose-then-correct cycle (lines~2--13). The additional cost per step is one extra attention evaluation (line~6) and one energy evaluation (line~8), doubling the per-iteration $\mathcal{O}(dK)$ cost. In the limit $\alpha\to 0$ both algorithms coincide; at moderate $\alpha$ the accept/reject step removes $O(\alpha)$ discretization bias.
 
 \paragraph{What line~8 computes and why.}
 The ULA update in Algorithm~\ref{alg:stochastic-attention} draws each new state from a Gaussian proposal centered on the Langevin mean $\boldsymbol{\mu}_t$:
@@ -185,7 +185,7 @@ This stochastic accept/reject step restores detailed balance \emph{exactly}, reg
 
 \section{Load-Ratio Phase Diagram}\label{app:phase-diagram}
 
-Figure~\ref{fig:phase-diagram} showed the full phase diagram of attention concentration $C = 1 - H(\mathbf{a})/\log K$ over load ratio $K/d$ and inverse temperature~$\beta$, as described in the main text.
+Figure~\ref{fig:phase-diagram} shows the full phase diagram of attention concentration $C = 1 - H(\mathbf{a})/\log K$ over load ratio $K/d$ and inverse temperature~$\beta$, as described in the main text.
 
 \begin{figure}[t]
 \centering
@@ -240,7 +240,7 @@ MALA                        & $0.151 \pm 0.001$ & $0.554 \pm 0.002$ & $-0.305 \p
 
 Across all three digit classes, the stochastic attention sampler and MALA produced practically indistinguishable metrics, both dominating every baseline on diversity simultaneously. The VAE (latent dim 8) was the strongest non-Langevin baseline on novelty ($0.180$--$0.209$ vs.\ $0.130$--$0.194$ for GMM-PCA), but both learned models were far below the Langevin methods on diversity ($0.397$--$0.408$ for VAE vs.\ $0.557$--$0.600$ for SA), confirming that a static learned density cannot match the ergodic coverage of Langevin dynamics. The MALA acceptance rate was 99.2\% for all digits, confirming that ULA discretization bias remains negligible regardless of digit morphology.
 
-Figure~\ref{fig:mnist-digit1-grids} and Figure~\ref{fig:mnist-digit8-grids} showed representative $4{\times}4$ sample grids for each method. The qualitative pattern was the same as for digit ``3'': bootstrap outputs were exact stored copies, Gaussian perturbation was visually indistinguishable from bootstrap, random convex combinations produced uniform blurry averages, and both Langevin methods generated diverse, structured digits.
+Figures~\ref{fig:mnist-digit1-grids} and~\ref{fig:mnist-digit8-grids} show representative $4{\times}4$ sample grids for each method. The qualitative pattern was the same as for digit ``3'': bootstrap outputs were exact stored copies, Gaussian perturbation was visually indistinguishable from bootstrap, random convex combinations produced uniform blurry averages, and both Langevin methods generated diverse, structured digits.
 
 \begin{figure}[h]
 \centering
@@ -297,7 +297,7 @@ Figure~\ref{fig:mnist-digit1-grids} and Figure~\ref{fig:mnist-digit8-grids} show
 \paragraph{Temperature spectrum on digit ``8.''}
 The baseline comparison above fixes $\beta{=}2000$, which places the sampler deep in the retrieval regime: each chain stays near its seed pattern and the ``generation'' is local variation within a single energy basin.
 To show the full retrieval-generation trade-off on real images, Figure~\ref{fig:temp-spectrum-digit8} displays $4{\times}4$ SA grids at four inverse temperatures alongside 16 stored patterns for reference.
-Table~\ref{tab:temp-spectrum-digit8} reported the corresponding metrics.
+Table~\ref{tab:temp-spectrum-digit8} reports the corresponding metrics.
 
 \begin{table}[h]
 \centering
@@ -549,15 +549,15 @@ Algorithm~\ref{alg:mala-sequential} gives the pseudocode.
 We generated $T_{\text{days}} = 2{,}766$ synthetic trading days (matching the historical sample size) with $T_{\text{inner}} = 200$, $\alpha = 0.01$, and $\beta = 12$. The mean MALA acceptance rate was 99.4\%, confirming that the ULA discretization bias is negligible at this operating point.
 
 \paragraph{Stylized Fact~2: Near-zero return autocorrelation.}
-Figure~\ref{fig:finance-acf-combined} (top row) showed the autocorrelation function of raw returns for five representative tickers. The generated ACF (blue) lay within the 99\% confidence interval for white noise at all lags $\geq 1$, matching the historical pattern (red).
+Figure~\ref{fig:finance-acf-combined} (top row) shows the autocorrelation function of raw returns for five representative tickers. The generated ACF (blue) lay within the 99\% confidence interval for white noise at all lags $\geq 1$, matching the historical pattern (red).
 
 \paragraph{Stylized Fact~3: Volatility clustering.}
-Figure~\ref{fig:finance-acf-combined} (bottom row) showed the autocorrelation function of squared returns. The historical series (red) exhibits the characteristic slow-decaying positive autocorrelation of volatility clustering. The generated series (blue), however, showed ACF($g^2$) $\approx 0$ at all lags; the sampler did not reproduce this effect. We verified that at the main operating point ($\beta{=}25$, $T_{\text{inner}}{=}2{,}000$), ACF($g^2$) also collapses to ${\approx}0$ (mean over $424$ tickers: $0.0005$), confirming this is a property of equilibrium sampling and not an artifact of the choice of~$\beta$.
+Figure~\ref{fig:finance-acf-combined} (bottom row) shows the autocorrelation function of squared returns. The historical series (red) exhibits the characteristic slow-decaying positive autocorrelation of volatility clustering. The generated series (blue), however, shows ACF($g^2$) $\approx 0$ at all lags; the sampler did not reproduce this effect. We verified that at the main operating point ($\beta{=}25$, $T_{\text{inner}}{=}2{,}000$), ACF($g^2$) also collapses to ${\approx}0$ (mean over $424$ tickers: $0.0005$), confirming this is a property of equilibrium sampling and not an artifact of the choice of~$\beta$.
 
 This is a fundamental limitation of equilibrium Boltzmann sampling, not a tuning failure. The stochastic attention sampler targets the stationary distribution $p_\beta \propto \exp(-\beta E)$ at fixed~$\beta$. At stationarity, the variance of each day's output is governed by the static energy landscape and the fixed temperature; there is no mechanism for the return variance to change systematically over time. Volatility clustering in real markets arises from non-stationary dynamics: regime shifts driven by exogenous shocks, feedback loops between volatility and leverage, and time-varying risk premia~\cite{contStylizedFactsAsset2001}. Reproducing these effects within the Langevin framework would require introducing explicit temporal structure, for instance a time-varying inverse temperature $\beta(t)$ that creates exogenous volatility regimes, or coupling the sampler to a latent regime-switching process. These extensions are natural directions for future work.
 
 \paragraph{Summary.}
-Table~\ref{tab:finance-summary} made three theoretical predictions concrete. \emph{First}, the novelty--fidelity trade-off is real and quantified: SA generates regime interpolations absent from the historical record ($\mathcal{N}=0.768\pm0.001$) while bootstrap, which replays history verbatim, achieves $\mathcal{N}=0.000$; marginal fidelity runs in the opposite direction ($64.2\%$ vs.\ $99.3\%$ KS pass). \emph{Second}, the Hopfield energy captures cross-sectional dependence independently of marginals: Frobenius error $26.3\%$ is unchanged by per-ticker affine correction, confirming that the energy geometry encodes correlation structure, not scale. \emph{Third}, volatility clustering, a non-stationary phenomenon driven by regime shifts and leverage feedback~\cite{contStylizedFactsAsset2001}, is exactly what a fixed-$\beta$ equilibrium sampler cannot reproduce; the absence is a theoretical prediction confirmed by experiment, not a tuning failure.
+Table~\ref{tab:finance-summary} makes three theoretical predictions concrete. \emph{First}, the novelty--fidelity trade-off is real and quantified: SA generates regime interpolations absent from the historical record ($\mathcal{N}=0.768\pm0.001$) while bootstrap, which replays history verbatim, achieves $\mathcal{N}=0.000$; marginal fidelity runs in the opposite direction ($64.2\%$ vs.\ $99.3\%$ KS pass). \emph{Second}, the Hopfield energy captures cross-sectional dependence independently of marginals: Frobenius error $26.3\%$ is unchanged by per-ticker affine correction, confirming that the energy geometry encodes correlation structure, not scale. \emph{Third}, volatility clustering, a non-stationary phenomenon driven by regime shifts and leverage feedback~\cite{contStylizedFactsAsset2001}, is exactly what a fixed-$\beta$ equilibrium sampler cannot reproduce; the absence is a theoretical prediction confirmed by experiment, not a tuning failure.
 
 \begin{table}[h]
 \centering
@@ -606,7 +606,7 @@ At $d=4{,}096$, the MNIST value $\beta=2{,}000$ gives $\mathrm{SNR}=\sqrt{\alpha
 We used $\beta=10{,}000$ ($\mathrm{SNR}=0.110$), recovering the MNIST operating point. All other hyperparameters were identical to the MNIST experiment: $\alpha=0.01$, 30 independent chains initialized near distinct stored patterns ($\sigma_{\mathrm{init}}=0.01$), $T=5{,}000$ iterations, burn-in $2{,}000$, thin every 100 then sub-sample 5 per chain, yielding $30\times 5=150$ samples per method. The MALA acceptance rate exceeded 99\%, confirming that ULA discretization bias is negligible.
 
 \paragraph{Temperature spectrum.}
-Figure~\ref{fig:simpsons-spectrum} showed four samples at each of six inverse temperatures spanning $\beta\in\{500,1000,2000,5000,10000,20000\}$, corresponding to $\mathrm{SNR}\in\{0.025,0.035,0.049,0.078,0.110,0.156\}$. The noise-to-retrieval transition tracked SNR, not the raw $\beta$ value: rows below $\mathrm{SNR}\approx 0.05$ show diffuse gray images, while rows at $\mathrm{SNR}\geq 0.110$ yield recognizable character faces.
+Figure~\ref{fig:simpsons-spectrum} shows four samples at each of six inverse temperatures spanning $\beta\in\{500,1000,2000,5000,10000,20000\}$, corresponding to $\mathrm{SNR}\in\{0.025,0.035,0.049,0.078,0.110,0.156\}$. The noise-to-retrieval transition tracked SNR, not the raw $\beta$ value: rows below $\mathrm{SNR}\approx 0.05$ show diffuse gray images, while rows at $\mathrm{SNR}\geq 0.110$ yield recognizable character faces.
 
 \begin{figure}[h]
 \centering
@@ -616,7 +616,7 @@ Figure~\ref{fig:simpsons-spectrum} showed four samples at each of six inverse te
 \end{figure}
 
 \paragraph{Quantitative comparison.}
-Table~\ref{tab:simpsons-baselines} reported metrics for all five methods at $\beta=10{,}000$. The relative ranking matched the MNIST experiment exactly: SA and MALA dominated all non-Langevin baselines on every axis simultaneously, and both Langevin methods were statistically indistinguishable. SA novelty ($0.159\pm 0.000$) was comparable to the MNIST value ($0.152\pm 0.001$); mean energy ($-0.293\pm 0.000$) confirmed that samples lay on the memory manifold. Diversity was lower than MNIST ($0.293$ vs.\ $0.600$), but this reflected the higher inter-pattern correlation of face images rather than a failure of the sampler: bootstrap diversity ($0.117$) was likewise far below the MNIST value ($0.459$), indicating that the stored patterns themselves were more concentrated in the Simpsons corpus.
+Table~\ref{tab:simpsons-baselines} reports metrics for all five methods at $\beta=10{,}000$. The relative ranking matches the MNIST experiment exactly: SA and MALA dominated all non-Langevin baselines on every axis simultaneously, and both Langevin methods were statistically indistinguishable. SA novelty ($0.159\pm 0.000$) was comparable to the MNIST value ($0.152\pm 0.001$); mean energy ($-0.293\pm 0.000$) confirmed that samples lay on the memory manifold. Diversity was lower than MNIST ($0.293$ vs.\ $0.600$), but this reflected the higher inter-pattern correlation of face images rather than a failure of the sampler: bootstrap diversity ($0.117$) was likewise far below the MNIST value ($0.459$), indicating that the stored patterns themselves were more concentrated in the Simpsons corpus.
 
 \begin{table}[h]
 \centering
@@ -1112,7 +1112,7 @@ We use $K{=}100$ digit-3 images from MNIST ($d{=}784$), the same memory as all o
 \caption{Multi-head SA with PCA-partitioned subspaces versus single-head SA at larger memory sizes. All configurations at $\beta{=}200$ (generation regime). Metrics computed against each configuration's own memory. MaxCos: mean maximum cosine similarity to the nearest stored pattern.}
 \label{tab:multihead}
 \small
-\begin{tabular}{@{}llcccc@{}}
+\begin{tabular}{@{}llccc@{}}
 \toprule
 Config & $K$ & $\mathcal{N}$ $\uparrow$ & $\bar{\mathcal{D}}$ $\uparrow$ & MaxCos $\uparrow$ \\
 \midrule
