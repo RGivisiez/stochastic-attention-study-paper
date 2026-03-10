@@ -119,3 +119,50 @@ The paper identifies a clean and correct connection but does not clear the NeurI
 6. ~~Clarify the SNR threshold as empirical observation, not a derived rule~~ ✅ Done — now derived via entropy inflection (Proposition 4)
 7. ~~VAE baseline on all digits and domains~~ ✅ Done — VAE now runs on digits 1, 3, 8 and protein sequences
 8. ~~Add non-image domain with full baselines~~ ✅ Done — protein sequence experiment (PF00076 RRM family, 68 seqs, 71 positions)
+
+---
+
+## Re-Review After Revisions (2026-03-09)
+
+### Weakness-by-Weakness Status
+
+| # | Weakness | Status | Notes |
+|---|----------|--------|-------|
+| W1 | Novelty incremental | ✅ Addressed | Three contributions clearly articulated; intro honestly acknowledges ingredients are known |
+| W2 | Convergence doesn't apply | ✅ Addressed | Corollary demoted; "Beyond the convex regime" paragraph is candid and thorough; main theory is now Prop 4 (entropy inflection) |
+| W3 | Weak baselines | ✅ Addressed | DDPM added + scaling study K=100 to 3,500; DDPM never exceeds max-cos 0.09; seven baselines total |
+| W4 | Metrics gamed by temperature | ⚠️ Substantially strengthened | Protein KL=0.060 is a domain-specific fidelity metric that *cannot* be gamed by temperature, and it's 6.9x better than VAE. Gaussian noise control also helps. Still no FID/IS. |
+| W5 | SNR rule empirical | ✅ Addressed | Prop 4 derives entropy inflection; β\*~√N scaling; validated on protein data (β\*=3.85 correctly predicted lower than √d) |
+| W6 | Domains inflated | ✅ Addressed | Five domains; two main-body with full baselines (MNIST, protein); three appendix |
+| W7 | RAG/ICL claims | ✅ Addressed | Removed from abstract; "may, in future work" in intro |
+| W8 | MALA comparison trivial | ✅ Addressed | Step-size sweep maps the divergence threshold |
+| W9 | Multi-chain confounds | ✅ Addressed | Single-chain diversity 0.796 at β=200 > multi-chain 0.600 at β=2000 |
+
+### What Moved the Needle Most
+
+1. **Protein KL result** — The paper's strongest finding. KL=0.060 vs VAE's 0.416 at matched novelty (0.623 vs 0.621) is not dismissable. It directly addresses W4 (metrics can't be gamed when measuring amino acid composition fidelity) and W6 (genuine non-image domain with domain-specific evaluation). The interpretation is clean: the training-free score function preserves family-level structure that learned models lose with K=68 training examples.
+
+2. **DDPM scaling study** — Comprehensively dispatches W3. Not just "DDPM fails at K=100" but "DDPM fails at every K tested (100 to 3,500), with β set fairly via entropy inflection at each K."
+
+3. **Entropy inflection derivation** — Transforms W5 from a liability into a genuine theoretical contribution. The β\*=3.85 prediction on protein data (half of √d due to conserved residues) shows the theory is predictive, not just descriptive.
+
+### What's Still Not Perfect
+
+- **No FID/IS** — Impractical at 28×28 grayscale with K=100, and the protein KL is arguably a better metric anyway, but a skeptical reviewer could still push on this.
+- **β=200 MNIST samples** — Still "blurry-but-recognizable." The Gaussian noise control helps but doesn't fully resolve W4 for images. The protein result compensates.
+- **No mixing time bounds at high β** — Acknowledged as fundamentally hard (exponential barriers). Honest, but still a gap.
+- **34 pages** — Way over NeurIPS limit. Fine for arxiv, will need serious cutting for submission.
+
+### Score Estimate
+
+**Original review: 4/10 (Weak Reject)**
+
+**Current: 6.5–7/10 (Borderline Accept)**
+
+The paper has moved from "correct but incremental with weak experiments" to "correct with a genuine theoretical contribution (entropy inflection) and a strong empirical result (protein KL)." The protein experiment is the single biggest upgrade — it provides a domain-specific fidelity metric that cannot be dismissed as "just high-temperature noise," and the 6.9x advantage is large. The scaling study closes the DDPM gap convincingly.
+
+### To Push Into Solid 7–8 Territory
+
+1. **Cut to NeurIPS page limit** — the immediate practical blocker
+2. **One more structured domain** with a domain-specific fidelity metric — the protein pattern works; another domain like it would cement the story
+3. **Sharper framing of the β=200 MNIST regime** — lean into the protein result as the primary generation evidence and frame MNIST β=200 as a secondary illustration
