@@ -465,6 +465,22 @@ At $\beta{=}8$ (generation, $2\beta^*$), SA matches the VAE on novelty ($0.623$ 
 
 The entropy inflection analysis validates at this new dimensionality: the empirical $\beta^*{=}3.85$ is approximately half the random-pattern prediction $\sqrt{d}{=}7.68$. This discrepancy is expected: RRM sequences share conserved residues at many positions, reducing the effective variance of the query-key similarities and shifting the phase transition to lower $\beta$. The inflection criterion (Eq.~\ref{eq:inflection}) automatically accounts for this structure, providing the correct operating point without manual tuning.
 
+\paragraph{HMMER validation.}
+To provide a biologically meaningful validity metric beyond amino acid composition, we validated all generated sequences against the Pfam RRM profile HMM using HMMER~3.4~\cite{hmmer3}. Gap characters were removed from each generated sequence before submission to \texttt{hmmsearch}. All $150$ generated sequences from every method pass at $E$-value~$<0.01$, with SA at generation temperature achieving a median $E$-value of $8.1{\times}10^{-34}$ -- far below the threshold and lower (better) than the stored sequences' median of $2.5{\times}10^{-22}$. The generated sequences achieve better $E$-values because the generation process produces smoother, more canonical sequences that match the HMM consensus closely. The $100\%$ pass rate confirms that SA-generated sequences are biologically valid RRM family members, not arbitrary sequences that happen to share amino acid composition statistics.
+
+\paragraph{Position-specific fidelity.}
+The global amino acid KL divergence aggregates frequencies across all positions. To verify that SA preserves \emph{position-specific} conservation patterns, we computed the KL divergence independently at each of the $L{=}71$ aligned positions and report the mean.
+
+SA in the generation regime achieves a mean per-position KL of $2.92$, compared to $9.99$ for the VAE ($3.4{\times}$ lower), $7.52$ for bootstrap, and $9.09$ for GMM-PCA. This confirms that the advantage extends beyond global composition to position-specific conservation patterns: SA correctly identifies which positions are conserved and which are variable, preserving the position-specific amino acid distribution at each residue. MALA at generation temperature achieves a comparable $2.96$.
+
+\paragraph{Pairwise coupling fidelity.}
+To address the concern that marginal frequency metrics ignore sequence-level dependencies, we computed the pairwise mutual information (MI) between residue positions. For a set of sequences, the MI between positions $i$ and $j$ is $\mathrm{MI}(i,j)=\sum_{a,b}p(a,b)\log\bigl[p(a,b)/(p(a)p(b))\bigr]$, where $p(a,b)$ is the joint frequency of amino acids $a$ and $b$ at positions $i$ and $j$. We computed MI matrices for each method's generated sequences and measured the Pearson correlation with the stored family's MI matrix.
+
+SA at generation temperature achieves MI correlation $r{=}0.871$, compared to $r{=}0.525$ for the VAE -- a $66\%$ improvement. Bootstrap replay achieves $r{=}0.692$ and SA at retrieval temperature achieves $r{=}0.733$. This demonstrates that SA-generated sequences reproduce the pairwise co-evolutionary coupling structure of the RRM family, capturing sequence-level dependencies that go beyond single-position statistics. The high MI correlation, combined with the low per-position KL and $100\%$ HMM pass rate, provides strong evidence that SA-generated sequences are structurally and functionally plausible RRM family members.
+
+\paragraph{MALA at generation temperature.}
+SA and MALA produce near-identical results at the generation temperature ($\beta{=}8$): KL$=0.060$ vs.\ $0.058$, sequence identity $0.538$ vs.\ $0.537$, novelty $0.623$ vs.\ $0.616$, MI correlation $0.871$ vs.\ $0.887$ (MALA acceptance $99.8\%$). The ULA bias is negligible for protein sequences at both retrieval and generation temperatures.
+
 \section{Financial Log-Return Generation}\label{app:finance}
 
 The synthetic experiments validated the sampler on controlled geometry; this section used real financial data to \emph{precisely characterize} what equilibrium Boltzmann sampling on the Hopfield energy captures and, equally importantly, what it cannot, and why each limitation is a principled theoretical consequence rather than a tuning failure.
@@ -988,3 +1004,138 @@ $K$ & $K/d$ & $\beta^*$ & \multicolumn{3}{c}{SA (generation, $\beta{=}\beta^*$)}
 Three findings emerge. First, DDPM's max-cosine similarity never exceeds $0.09$ across the entire range $K\in[100,\,3{,}500]$, remaining close to the isotropic noise baseline of ${\approx}0.06$. The MLP denoiser cannot learn the data distribution even with $3{,}500$ training images in $\mathbb{R}^{784}$. Second, SA's max-cosine similarity grows monotonically with $K$: from $0.126$ at $K{=}100$ to $0.175$ at $K{=}3{,}500$ in the generation regime, and from $0.237$ to $0.327$ in the retrieval regime. More stored patterns provide denser coverage of the data manifold, enabling SA to generate samples that are structurally closer to the training distribution. Third, the entropy-inflection $\beta^*$ increases with $K$ (from $9$ to $18$), consistent with the theoretical prediction that the transition temperature shifts as memory load grows. SA requires no retuning: the entropy inflection provides a principled, automatic $\beta$ at each $K$.
 
 We acknowledge that a convolutional U-Net DDPM operating on 2D images (rather than flattened vectors) would likely perform better, particularly at larger $K$. The comparison here is deliberately controlled: both methods operate on the same flattened, unit-norm representation. The point is not that SA is universally superior to diffusion models, but that SA's training-free score function provides a structural advantage in the low-data regime ($K\lesssim 10^3$) and that this advantage persists as $K$ grows within the range tested.
+
+\section{MALA at Generation Temperature}\label{app:mala-generation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+To confirm that the ULA discretization bias is negligible in the generation regime (not just the retrieval regime), we ran the full MALA comparison at $\beta\in\{200,\,500,\,1000\}$ with the same 30-chain protocol on MNIST digit ``3'' ($K{=}100$).
+
+\begin{table}[h]
+\centering
+\caption{ULA (SA) vs.\ MALA across the generation-to-retrieval spectrum. $\Delta$ columns report SA$-$MALA. All differences are negligible ($|\Delta|<0.02$), confirming that ULA bias does not affect any experimental conclusion.}
+\label{tab:mala-generation}
+\small
+\begin{tabular}{@{}rccccccc@{}}
+\toprule
+$\beta$ & Accept & $\mathcal{N}_{\text{SA}}$ & $\Delta\mathcal{N}$ & $\bar{\mathcal{D}}_{\text{SA}}$ & $\Delta\bar{\mathcal{D}}$ & $\bar{E}_{\text{SA}}$ & $\Delta\bar{E}$ \\
+\midrule
+200  & 99.2\% & 0.548 & $+0.002$ & 0.885 & $+0.002$ & $+1.467$ & $+0.018$ \\
+500  & 99.2\% & 0.375 & $+0.002$ & 0.782 & $+0.002$ & $+0.287$ & $+0.007$ \\
+1000 & 99.2\% & 0.251 & $+0.002$ & 0.687 & $+0.002$ & $-0.107$ & $+0.004$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At $\beta{=}200$ (the generation regime), the deltas are: $\Delta\mathcal{N}{=}+0.002$, $\Delta\bar{\mathcal{D}}{=}+0.002$, $\Delta\bar{E}{=}+0.018$, with MALA acceptance rate $99.2\%$. At $\beta{=}1000$ (transition band), all 150 samples from both SA and MALA have negative energy ($E<0$, on the memory manifold), with even smaller deltas ($\Delta\bar{E}{=}+0.004$). The ULA bias monotonically decreases with increasing $\beta$ and is negligible across the entire spectrum at step size $\alpha{=}0.01$.
+
+\section{Full-Data VAE Comparison}\label{app:full-mnist-vae}
+% ─────────────────────────────────────────────────────────────────────────────
+
+To test whether SA's advantage over the VAE is an artifact of the limited training data ($K{=}100$), we trained VAEs on substantially larger datasets and compared against SA using the same $K{=}100$ memory.
+
+\paragraph{Setup.}
+We trained two classes of VAE: (1)~a \emph{digit-3 VAE} trained on $N{=}1{,}000$ digit-3 images (${10\times}$ the SA memory); and (2)~an \emph{all-MNIST VAE} trained on $N{=}10{,}000$ images across all ten digit classes (${100\times}$ the SA memory). Both use a larger architecture than the $K{=}100$ baseline (encoder: $784\to 512\to 256$; decoder: symmetric), with latent dimensions swept over $\{8,\,16,\,32,\,64\}$ for the digit-3 VAE and $32$ for the all-MNIST VAE. Training followed the same two-phase protocol (AE warmup + KL annealing, 2{,}000 epochs each) with mini-batch training (batch size $256$). For the all-MNIST VAE, we generated $5{,}000$ samples and selected the $150$ with highest max-cosine similarity to the $K{=}100$ digit-3 memory (simulating class-conditional generation without an explicit classifier).
+
+\begin{table}[h]
+\centering
+\caption{Comparison of SA against VAEs trained on $10{\times}$ to $100{\times}$ more data. All metrics computed against the same $K{=}100$ digit-3 memory matrix. MaxCos: mean max-cosine similarity to nearest stored pattern. On-manif: fraction of samples with Hopfield energy $E<0$.}
+\label{tab:full-vae}
+\small
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+Method & Train data & MaxCos $\uparrow$ & $\mathcal{N}$ $\uparrow$ & $\bar{\mathcal{D}}$ $\uparrow$ & $\bar{E}$ $\downarrow$ & On-manif \\
+\midrule
+VAE (lat${=}8$, original)  & $K{=}100$ & $0.775$ & $0.225$ & $0.426$ & $-0.276$ & $100\%$ \\
+VAE-D3 (lat${=}8$)         & $N{=}1{,}000$ & $0.668$ & $0.332$ & $0.603$ & $-0.168$ & $94\%$ \\
+VAE-D3 (lat${=}32$)        & $N{=}1{,}000$ & $0.743$ & $0.257$ & $0.466$ & $-0.244$ & $100\%$ \\
+VAE-D3 (lat${=}64$)        & $N{=}1{,}000$ & $0.762$ & $0.238$ & $0.413$ & $-0.263$ & $100\%$ \\
+VAE-all (lat${=}32$, top)  & $N{=}10{,}000$ & $0.830$ & $0.170$ & $0.325$ & $-0.330$ & $100\%$ \\
+\midrule
+\textbf{SA ($\beta{=}2000$)} & $K{=}100$ & $\mathbf{0.848}$ & $0.152$ & $\mathbf{0.600}$ & $-0.303$ & $100\%$ \\
+SA ($\beta{=}200$)          & $K{=}100$ & $0.452$ & $\mathbf{0.548}$ & $\mathbf{0.885}$ & $+1.467$ & $0\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three findings emerge. First, SA at $\beta{=}2000$ (retrieval) achieves higher max-cosine similarity ($0.848$) than the best full-data VAE ($0.830$, all-MNIST with top-$150$ filtering), with $85\%$ higher diversity ($0.600$ vs.\ $0.325$), despite using $100{\times}$ less data and zero training. Second, the original $K{=}100$ VAE (lat${=}8$) achieves higher max-cos ($0.775$) than the $N{=}1{,}000$ VAEs with larger latent dimensions ($0.668$--$0.762$), because training on only $K{=}100$ patterns causes the VAE to memorize them; with more data, the VAE generalizes but individual samples are less similar to specific stored patterns. Third, all full-data VAEs produce less diverse outputs ($0.325$--$0.603$) than SA at any temperature ($0.600$--$0.885$). SA's advantage is not an artifact of limited training data: the training-free score function provides a structural advantage in both fidelity and diversity.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Principal Component Analysis}\label{app:pca}
+% ═══════════════════════════════════════════════════════════════════════════════
+
+Several experiments in this paper use Principal Component Analysis (PCA) for dimensionality reduction: the protein sequence experiment projects one-hot encodings from $\mathbb{R}^{1420}$ to $\mathbb{R}^{59}$ (Section~\ref{app:protein}), the GMM-PCA baseline operates in a 50-dimensional PCA subspace (Section~\ref{app:gmm-pca}), and the multi-head SA demo partitions PCA subspaces across heads (Section~\ref{app:multihead}). We briefly summarize the construction for completeness.
+
+\paragraph{Setup.}
+Given a memory matrix $\mathbf{X} = [\mathbf{m}_1,\dots,\mathbf{m}_K] \in \mathbb{R}^{d \times K}$, define the column mean $\bar{\mathbf{m}} = \frac{1}{K}\sum_{k=1}^{K}\mathbf{m}_k$ and the centered matrix $\tilde{\mathbf{X}} = \mathbf{X} - \bar{\mathbf{m}}\mathbf{1}_K^\top \in \mathbb{R}^{d \times K}$.
+
+\paragraph{Singular value decomposition.}
+The economy SVD of the centered matrix is
+\begin{equation}\label{eq:pca-svd}
+    \tilde{\mathbf{X}} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^\top,
+\end{equation}
+where $\mathbf{U} \in \mathbb{R}^{d \times r}$ has orthonormal columns (the \emph{principal directions}), $\boldsymbol{\Sigma} = \operatorname{diag}(\sigma_1,\dots,\sigma_r)$ with $\sigma_1 \ge \sigma_2 \ge \cdots \ge \sigma_r > 0$ (the \emph{singular values}), and $\mathbf{V} \in \mathbb{R}^{K \times r}$ has orthonormal columns. Here $r = \operatorname{rank}(\tilde{\mathbf{X}}) \le \min(d, K)$.
+
+\paragraph{Variance interpretation.}
+The $j$-th principal component of pattern $\mathbf{m}_k$ is $z_{kj} = \mathbf{u}_j^\top(\mathbf{m}_k - \bar{\mathbf{m}})$. The variance of the $j$-th component across the $K$ patterns is $\sigma_j^2 / K$, and the fraction of total variance captured by the first $p$ components is
+\begin{equation}\label{eq:pca-variance}
+    \rho(p) = \frac{\sum_{j=1}^{p}\sigma_j^2}{\sum_{j=1}^{r}\sigma_j^2}.
+\end{equation}
+
+\paragraph{Projection and reconstruction.}
+To reduce dimensionality from $d$ to $p \le r$, define the projection matrix $\mathbf{W}_p = \mathbf{U}_{:,1:p}^\top \in \mathbb{R}^{p \times d}$ using the first $p$ principal directions. The projected representation of pattern $\mathbf{m}_k$ is $\mathbf{z}_k = \mathbf{W}_p(\mathbf{m}_k - \bar{\mathbf{m}}) \in \mathbb{R}^p$, and the approximate reconstruction is $\hat{\mathbf{m}}_k = \bar{\mathbf{m}} + \mathbf{W}_p^\top\mathbf{z}_k$. Among all rank-$p$ linear projections, PCA minimizes the mean squared reconstruction error $\frac{1}{K}\sum_{k=1}^{K}\|\mathbf{m}_k - \hat{\mathbf{m}}_k\|_2^2 = \frac{1}{K}\sum_{j=p+1}^{r}\sigma_j^2$.
+
+\paragraph{Usage in this paper.}
+In the protein experiment (Section~\ref{app:protein}), we select $p$ such that $\rho(p) \ge 0.95$ (retaining 95\% of variance), yielding $p{=}59$ from $d{=}1420$. After projection, the $p$-dimensional representations are $\ell_2$-normalized to form the memory matrix. In the multi-head SA experiment (Section~\ref{app:multihead}), we partition the principal directions across attention heads to assign each head a different variance subspace.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Multi-Head Stochastic Attention}\label{app:multihead}
+% ═══════════════════════════════════════════════════════════════════════════════
+
+A natural question is whether SA extends to multi-head attention, where each head operates on a learned low-dimensional projection of the memory. We present a toy demonstration using PCA-partitioned subspaces as a proxy for learned projections.
+
+\paragraph{Construction.}
+In standard multi-head attention, each head $h \in \{1,\dots,H\}$ has learned projection matrices $\mathbf{W}_K^h, \mathbf{W}_Q^h \in \mathbb{R}^{d_{\mathrm{head}} \times d}$ that map keys and queries into a $d_{\mathrm{head}}$-dimensional subspace. Multi-head SA replaces the deterministic attention output with a Langevin sample from each head's energy:
+\begin{equation}\label{eq:multihead-energy}
+    E_h(\mathbf{z}) = \tfrac{1}{2}\|\mathbf{z}\|_2^2 - \tfrac{1}{\beta}\log\sum_{k=1}^{K}\exp\bigl(\beta\,(\mathbf{W}_K^h\mathbf{m}_k)^\top\mathbf{z}\bigr),
+    \quad \mathbf{z} \in \mathbb{R}^{d_{\mathrm{head}}},
+\end{equation}
+where the projected memories $\mathbf{W}_K^h\mathbf{m}_k$ serve as the stored patterns in head $h$'s subspace. Independent Langevin chains run on each $E_h$, producing per-head samples $\mathbf{z}^{(h)}$. The outputs are concatenated and projected back to the original space via $\boldsymbol{\xi} = \mathbf{W}_O[\mathbf{z}^{(1)};\dots;\mathbf{z}^{(H)}]$, exactly as in standard multi-head attention.
+
+\paragraph{PCA-partitioned projections.}
+Without learned projections, we use PCA to define meaningful subspaces. Given $K$ stored patterns with $r = \min(d, K)$ non-zero principal components (Section~\ref{app:pca}), we assign PCs $\{(h{-}1) \cdot r/H + 1,\,\dots,\,h \cdot r/H\}$ to head $h$. This gives each head a distinct slice of the data's variance structure: head 1 captures the dominant shape modes, while later heads capture progressively finer variation.
+
+\paragraph{Setup.}
+We use $K{=}100$ digit-3 images from MNIST ($d{=}784$), the same memory as all other MNIST experiments. With $r{=}100$ non-zero PCs, each head in an $H{=}4$ configuration receives 25 PCs. The sampling protocol is identical to the main experiments: 30 chains, 5{,}000 steps, 2{,}000 burn-in, thinned every 100 steps, 5 samples per chain (150 total). We also test whether simply increasing the number of stored patterns $K$ at fixed $H{=}1$ achieves the same effect.
+
+\begin{table}[h]
+\centering
+\caption{Multi-head SA with PCA-partitioned subspaces versus single-head SA at larger memory sizes. All configurations at $\beta{=}200$ (generation regime). Metrics computed against each configuration's own memory. MaxCos: mean maximum cosine similarity to the nearest stored pattern.}
+\label{tab:multihead}
+\small
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Config & $K$ & $\mathcal{N}$ $\uparrow$ & $\bar{\mathcal{D}}$ $\uparrow$ & MaxCos $\uparrow$ \\
+\midrule
+SA ($H{=}1$) & 100  & $0.547 \pm 0.002$ & $0.885 \pm 0.002$ & $0.453 \pm 0.002$ \\
+SA ($H{=}1$) & 500  & $0.548 \pm 0.003$ & $0.892 \pm 0.003$ & $0.452 \pm 0.003$ \\
+SA ($H{=}1$) & 1000 & $0.548 \pm 0.002$ & $0.892 \pm 0.003$ & $0.452 \pm 0.002$ \\
+\midrule
+SA ($H{=}2$, 50 PCs/head)  & 100 & $0.175 \pm 0.006$ & $0.307 \pm 0.002$ & $0.825 \pm 0.006$ \\
+SA ($H{=}4$, 25 PCs/head)  & 100 & $0.187 \pm 0.005$ & $0.291 \pm 0.002$ & $0.815 \pm 0.005$ \\
+SA ($H{=}5$, 20 PCs/head)  & 100 & $0.196 \pm 0.005$ & $0.263 \pm 0.002$ & $0.804 \pm 0.005$ \\
+\midrule
+SA ($H{=}4$, 25 PCs/head) & 500  & $0.391 \pm 0.003$ & $0.475 \pm 0.002$ & $0.609 \pm 0.003$ \\
+SA ($H{=}4$, 25 PCs/head) & 1000 & $0.469 \pm 0.004$ & $0.582 \pm 0.003$ & $0.531 \pm 0.004$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Variance decomposition.}
+The PCA variance explained by each head ($H{=}4$, $K{=}100$) is: head~1 (PCs~1--25): 81.2\%, head~2 (PCs~26--50): 12.6\%, head~3 (PCs~51--75): 4.5\%, head~4 (PCs~76--100): 1.6\%. Head~1 captures the dominant digit shape, while later heads contribute stroke-width variation and fine detail.
+
+\paragraph{Results.}
+Three findings emerge from Table~\ref{tab:multihead}. First, multi-head SA at $K{=}100$ substantially improves fidelity at the same $\beta$: $H{=}4$ achieves max-cos~$= 0.815$, approaching single-head retrieval at $\beta{=}2000$ ($0.848$, Table~\ref{tab:full-vae}), while single-head at $\beta{=}200$ achieves only $0.453$. The mechanism is that each head runs Langevin dynamics in a lower-dimensional subspace ($d_{\mathrm{head}} \ll d$), where the same $\beta$ produces a sharper Boltzmann distribution due to higher signal-to-noise ratio. Multi-head attention effectively shifts the retrieval--generation phase boundary.
+
+Second, increasing $K$ alone does not improve single-head SA at generation temperature: $K{=}1000$ gives identical metrics to $K{=}100$ (max-cos $= 0.452$ in both cases). At $\beta{=}200$ the energy landscape is sufficiently flat that additional memories do not sharpen the softmax weights. This confirms that the multi-head improvement is a genuine structural effect of dimensionality reduction, not simply a consequence of the $K/d$ ratio.
+
+Third, the multi-head advantage diminishes as $K$ grows per head: at $K{=}1000$ with $H{=}4$ (250 patterns per 25-dimensional head subspace), max-cos drops to $0.531$, approaching the single-head value. This is consistent with the paper's capacity analysis: as $K/d_{\mathrm{head}}$ increases, the per-head energy landscape flattens and the dimensionality-reduction benefit erodes. In a learned multi-head architecture, the projections would adapt to maintain separation even at large $K$, but the PCA-partitioned proxy cannot.

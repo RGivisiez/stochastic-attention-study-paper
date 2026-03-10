@@ -18,7 +18,11 @@
       "Bash(open /Users/jeffreyvarner/Desktop/julia_work/stochastic-attention-study-paper/poster/poster.pdf)",
       "Bash(pdflatex -interaction=nonstopmode poster.tex 2>&1 | grep -E \"\\(Overfull|vbox|Error|Output written\\)\" && open poster.pdf)",
       "Bash(find /Users/jeffreyvarner/Desktop/julia_work/stochastic-attention-study-paper -name \"*mnist*\" -o -name \"*MNIST*\" 2>/dev/null | grep -v \".git\")",
-      "Bash(which qrencode; kpsewhich qrcode.sty 2>/dev/null)"
+      "Bash(which qrencode; kpsewhich qrcode.sty 2>/dev/null)",
+      "Bash(wc -l /Users/jdv27/Desktop/julia_work/stochastic-attention-study-paper/paper/*.tex /Users/jdv27/Desktop/julia_work/stochastic-attention-study-paper/paper/sections/*.tex)",
+      "Bash(kill 10005 2>/dev/null; echo \"killed\")",
+      "Bash(which hmmsearch:*)",
+      "Bash(brew install:*)"
     ]
   }
 }
