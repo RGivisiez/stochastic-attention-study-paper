@@ -13,7 +13,10 @@
       "Bash(julia:*)",
       "Bash(cp:*)",
       "Bash(/Users/jdv27/Desktop/julia_work/stochastic-attention-study-paper/paper/References_v1.bib:*)",
-      "Bash(bibtex Paper_v1:*)"
+      "Bash(bibtex Paper_v1:*)",
+      "Bash(cd /Users/jeffreyvarner/Desktop/julia_work/stochastic-attention-study-paper/poster/logo && inkscape cornell_seal_simple_black.svg --export-type=pdf --export-filename=cornell_logo.pdf 2>&1)",
+      "Bash(open /Users/jeffreyvarner/Desktop/julia_work/stochastic-attention-study-paper/poster/poster.pdf)",
+      "Bash(pdflatex -interaction=nonstopmode poster.tex 2>&1 | grep -E \"\\(Overfull|vbox|Error|Output written\\)\" && open poster.pdf)"
     ]
   }
 }
