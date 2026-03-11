@@ -94,13 +94,14 @@
 
   \begin{column}{0.78\linewidth}
     \raggedright
-    {\color{black}\bfseries\fontsize{56}{64}\selectfont
-      Stochastic Attention via Langevin Dynamics on the Modern Hopfield Energy}\\[8pt]
-    {\fontsize{34}{40}\selectfont
-      Abdulrahman Alswaidan \& Jeffrey D.\ Varner}\\[6pt]
+    {\color{black}\bfseries\fontsize{64}{77}\selectfont
+      Stochastic Attention via Langevin Dynamics on the Modern Hopfield Energy}\\[20pt]
+    {\fontsize{48}{58}\selectfont
+      Abdulrahman Alswaidan \& Jeffrey D.\ Varner}\\[12pt]
+    {\fontsize{36}{43}\selectfont\color{black}
+      R.F.\ Smith School of Chemical and Biomolecular Engineering, Cornell University}\\[20pt]
     {\fontsize{26}{32}\selectfont\color{black}
-      R.F.\ Smith School of Chemical and Biomolecular Engineering, Cornell University
-      \quad \texttt{aa2725, jdv27@cornell.edu}}
+      \texttt{\{aa2725, jdv27\}@cornell.edu}}
   \end{column}
 
   \begin{column}{0.10\linewidth}
@@ -133,35 +134,28 @@ Attention heads are deterministic: the same query always returns the same softma
 
 \vspace{4pt}
 \begin{center}
-  \includegraphics[width=0.96\linewidth]{figs/Fig-Beta-Spectrum.pdf}
+  \includegraphics[width=0.80\linewidth]{figs/Fig-Beta-Spectrum.pdf}
 \end{center}
 \vspace{2pt}
 {\small
-\textbf{Figure 1.} The retrieval--generation spectrum. A single inverse temperature $\beta$ controls sample behavior: low $\beta$ yields broad generation, high $\beta$ yields exact retrieval. The critical temperature $\beta^{\star}\!\sim\!\sqrt{d}$ marks the boundary, identified analytically via an entropy inflection condition.
+\textbf{Figure 1.} The retrieval--generation spectrum. A single inverse temperature $\beta$ controls sample behavior: low $\beta$ yields broad generation, high $\beta$ yields exact retrieval. The critical temperature $\beta^{\star}\!\sim\!\sqrt{d}$ marks the boundary, identified analytically via an entropy inflection condition for random unit-norm memories. A single parameter $\beta$ interpolates continuously between open-ended generation ($\beta\!\to\!0$) and exact retrieval ($\beta\!\to\!\infty$). 
 }
 
-\vspace{8pt}
-A single parameter $\beta$ interpolates continuously between open-ended generation ($\beta\!\to\!0$) and exact retrieval ($\beta\!\to\!\infty$). The critical temperature $\beta^{\star}$, identified analytically via an entropy inflection condition ($\beta^{\star}\!\sim\!\sqrt{d}$ for random unit-norm memories), marks the boundary between these two regimes.
 \end{block}
 
 % -----------------------------------------------------------
 \begin{block}{Method: Stochastic Attention Update}
 % -----------------------------------------------------------
-Suppose you have a memory (pattern) matrix $\mathbf{X} = [\mathbf{m}_1,\dots,\mathbf{m}_K]\!\in\!\mathbb{R}^{d\times K}$ that stores $K$ patterns where each each pattern is given by $\mathbf{m}_k \in \mathbb{R}^d$. To generate a new pattern or retrieve an existing one, we sample from $p_\beta(\boldsymbol{\xi})\!\propto\!\exp(-\beta E(\boldsymbol{\xi}))$.
-
-\vspace{6pt}
-The ULA turns any smooth energy $U$ into a sampler:
+Suppose you have a memory (pattern) matrix $\mathbf{X} = [\mathbf{m}_1,\dots,\mathbf{m}_K]\!\in\!\mathbb{R}^{d\times K}$ that stores $K$ patterns where each each pattern is given by $\mathbf{m}_k \in \mathbb{R}^d$. To generate a new pattern or retrieve an existing one, we sample from $p_\beta(\boldsymbol{\xi})\!\propto\!\exp(-\beta E(\boldsymbol{\xi}))$. The Unadjusted Langevin Algorithm (ULA) turns any smooth energy $U$ into a sampler:
 \[
   \boldsymbol{\xi}_{t+1} = \boldsymbol{\xi}_t - \tilde\alpha\,\nabla U(\boldsymbol{\xi}_t) + \sqrt{2\tilde\alpha}\;\boldsymbol{\epsilon}_t,
   \qquad \boldsymbol{\epsilon}_t \sim \mathcal{N}(\mathbf{0},\mathbf{I}).
 \]
-
 The gradient of the modern Hopfield energy is exactly the attention residual:
 \[
   \nabla E(\boldsymbol{\xi})
   = \boldsymbol{\xi} - \underbrace{\mathbf{X}\,\mathrm{softmax}(\beta\,\mathbf{X}^\top\boldsymbol{\xi})}_{\mathbf{T}(\boldsymbol{\xi})\;=\;\text{softmax attention map}}.
 \]
-
 Substituting $\nabla E$ into the ULA (with $U = \beta E$, $\tilde\alpha = \alpha/\beta$):
 
 \vspace{4pt}
@@ -180,27 +174,27 @@ Substituting $\nabla E$ into the ULA (with $U = \beta E$, $\tilde\alpha = \alpha
 
 \vspace{4pt}
 \begin{center}
-  \includegraphics[width=0.96\linewidth]{figs/Fig-Stochastic-Attention-Update.pdf}
+  \includegraphics[width=0.80\linewidth]{figs/Fig-Stochastic-Attention-Update.pdf}
 \end{center}
 \vspace{2pt}
-{\small
-\textbf{Figure 2.} The stochastic attention update decomposes into three interpretable components: contraction toward the origin, an attention pull toward stored memories, and isotropic Gaussian noise scaled by temperature. Each step costs $\mathcal{O}(dK)$, identical to one attention head, with no training required. Convergence is $W_2$-geometric in the convex regime ($\beta\sigma_{\max}^2 < 2$); MALA acceptance $= 99.2\%$ at $\alpha\!=\!0.01$ confirms negligible discretization bias. The critical temperature $\beta^*$ is selected via the entropy inflection condition $d^2H/d\beta^2\!=\!0$ and scales as $\beta^*\!\sim\!\sqrt{d}$.
+{\small\linespread{1.0}\selectfont
+\textbf{Figure 2.} The stochastic attention update decomposes into three components: contraction toward the origin, an attention pull toward stored memories, and isotropic Gaussian noise scaled by temperature. Each step costs $\mathcal{O}(dK)$, with no training required. Convergence is $W_2$-geometric in the convex regime ($\beta\sigma_{\max}^2 < 2$); Metropolis-Adjusted Langevin Algorithm (MALA) acceptance $= 99.2\%$ at $\alpha\!=\!0.01$ confirms negligible discretization bias. The critical temperature $\beta^*$ is selected via the entropy inflection condition and scales as $\beta^*\!\sim\!\sqrt{d}$.
 }
 \end{block}
 
 % -----------------------------------------------------------
-\begin{block}{Experiment 1:Phase Behavior \& Convergence (Synthetic)}
+\begin{block}{Experiment 1: Phase Behavior \& Convergence (Synthetic)}
 % -----------------------------------------------------------
-The theory predicts that $\beta$ acts as a continuous order parameter, with a smooth transition between generation and retrieval centered near $\beta^*\!\sim\!\sqrt{d}$. We tested this on synthetic random unit-norm patterns and verified convergence to the correct Boltzmann target.
+The theory predicts that $\beta$ acts as a continuous order parameter, with a smooth transition between generation and retrieval centered near $\beta^*\!\sim\!\sqrt{d}$. We tested this on synthetic random unit-norm patterns and verified convergence to the correct Boltzmann target (Figure 3).
 
 \vspace{4pt}
 \begin{center}
-  \includegraphics[width=0.96\linewidth]{../paper/figs/Fig_experiment-combined.pdf}
+  \includegraphics[width=0.90\linewidth]{../paper/figs/Fig_experiment-combined.pdf}
 \end{center}
 \vspace{2pt}
 {\small
-\textbf{Figure 3.} \textbf{(a)} $d\!=\!64$, $K\!=\!16$. Both cosine similarity to the nearest pattern (blue) and attention entropy (coral) underwent a smooth sigmoidal transition centered at $\beta\!\approx\!5$--$10$ (gold band), consistent with the predicted $\beta^*\!\sim\!\sqrt{d}\!\approx\!8$.
-\textbf{(b)} $d\!=\!8$, $K\!=\!4$, $\beta\!=\!5$. Eight independent chains (gray) converged to a long-run reference distribution (coral); KS testing confirmed the sampler reached the correct Boltzmann target.
+\textbf{Figure 3.} Synthetic data experiments. \textbf{(a)} $d\!=\!64$, $K\!=\!16$. Both cosine similarity to the nearest pattern (blue) and attention entropy (coral) underwent a smooth sigmoidal transition centered at $\beta\!\approx\!5$--$10$ (gold band), consistent with the predicted $\beta^*\!\sim\!\sqrt{d}\!\approx\!8$.
+\textbf{(b)} $d\!=\!8$, $K\!=\!4$, $\beta\!=\!5$. Eight independent chains (gray) converged to a long-run reference distribution (coral); Kolmogorov--Smirnov (KS) testing confirmed the sampler reached the correct Boltzmann target.
 }
 \end{block}
 
@@ -210,8 +204,8 @@ The theory predicts that $\beta$ acts as a continuous order parameter, with a sm
 {\small
 [1] Ramsauer et al., ``Hopfield Networks is All You Need,'' \emph{ICLR}, 2021.\par\vspace{2pt}
 [2] Roberts \& Tweedie, ``Exponential Convergence of Langevin Distributions and Their Discrete Approximations,'' \emph{Bernoulli}, 2(4):341--363, 1996.\par\vspace{2pt}
-[3] Durmus \& Moulines, ``Nonasymptotic Convergence Analysis for the Unadjusted Langevin Algorithm,'' \emph{Ann.\ Appl.\ Probab.}, 27(3):1551--1587, 2017.\par\vspace{2pt}
-[4] Ho, Jain \& Abbeel, ``Denoising Diffusion Probabilistic Models,'' \emph{NeurIPS}, 33:6840--6851, 2020.
+[3] Ho, Jain \& Abbeel, ``Denoising Diffusion Probabilistic Models,'' \emph{NeurIPS}, 33:6840--6851, 2020.\par\vspace{2pt}
+[4] Durmus \& Moulines, ``Nonasymptotic Convergence Analysis for the Unadjusted Langevin Algorithm,'' \emph{Ann.\ Appl.\ Probab.}, 27(3):1551--1587, 2017.
 }
 \end{block}
 
@@ -224,9 +218,9 @@ The theory predicts that $\beta$ acts as a continuous order parameter, with a sm
 \begin{column}{0.475\linewidth}
 
 % -----------------------------------------------------------
-\begin{block}{Experiment 2:MNIST Image Generation ($K=100$, $d=784$)}
+\begin{block}{Experiment 2: MNIST Image Generation ($K=100$, $d=784$)}
 % -----------------------------------------------------------
-With the phase behavior confirmed, we moved to structured data. We stored $K\!=\!100$ images of digit ``3'' and compared stochastic attention against both synthetic baselines (bootstrap, Gaussian perturbation, convex combinations, GMM-PCA) and learned generative models (VAE, DDPM). We ran 30 independent chains at $\beta\!=\!2000$ (retrieval) and $\beta\!=\!200$ (generation, near $\beta^*$), collecting 150 samples per regime.
+With the phase behavior confirmed, we moved to structured data. We stored $K\!=\!100$ images of digit ``3'' and compared stochastic attention against both synthetic baselines (bootstrap, Gaussian perturbation, convex combinations, Gaussian Mixture Model with Principal Component Analysis (GMM-PCA)) and learned generative models (Variational Autoencoder (VAE), Denoising Diffusion Probabilistic Model (DDPM)). We ran 30 independent chains at $\beta\!=\!2000$ (retrieval) and $\beta\!=\!200$ (generation, near $\beta^*$), collecting 150 samples per regime (Figure 4).
 
 \vspace{6pt}
 \begin{columns}[c, totalwidth=\linewidth]
@@ -274,7 +268,7 @@ In the generation regime, SA achieved $\mathbf{2.6\times}$ the novelty and $\mat
 \end{block}
 
 % -----------------------------------------------------------
-\begin{block}{Experiment 3:Protein Sequence Generation (Pfam RRM, $K=68$, $d=59$)}
+\begin{block}{Experiment 3: Protein Sequence Generation (Pfam RRM, $K=68$, $d=59$)}
 % -----------------------------------------------------------
 Protein sequences posed a harder test than images: generated samples must preserve not just global amino acid composition but position-specific conservation and pairwise co-evolutionary couplings that define family membership. We stored 68 aligned RRM (RNA Recognition Motif) sequences from Pfam, one-hot encoded and PCA-reduced to $d\!=\!59$ (95\% variance retained). The entropy inflection gave $\beta^*\!=\!3.85$, half the random-pattern prediction $\sqrt{d}\!=\!7.68$, because conserved residues concentrate the similarity spectrum.
 
@@ -297,11 +291,11 @@ Protein sequences posed a harder test than images: generated samples must preser
 
 \vspace{2pt}
 {\small
-\textbf{Figure 5.} \textbf{(Top)} Composition divergence (KL), per-position divergence, and coupling fidelity for SA vs.\ VAE on the Pfam RRM family ($K\!=\!68$, $d\!=\!59$). \textbf{(Bottom-left)} Stored (top) vs.\ SA-generated (bottom) amino acid frequencies. \textbf{(Bottom-right)} Entropy inflection identified $\beta^*\!=\!3.85$, the retrieval--generation boundary.
+\textbf{Figure 5.} \textbf{(Top)} Composition divergence (Kullback--Leibler, KL), per-position divergence, and coupling fidelity for SA vs.\ VAE on the Pfam RRM family ($K\!=\!68$, $d\!=\!59$). \textbf{(Bottom-left)} Stored (top) vs.\ SA-generated (bottom) amino acid frequencies. \textbf{(Bottom-right)} Entropy inflection identified $\beta^*\!=\!3.85$, the retrieval--generation boundary.
 }
 
 \vspace{10pt}
-At generation temperature, SA matched the VAE on novelty while achieving $\mathbf{6.9\times}$ lower composition divergence, $\mathbf{3.4\times}$ lower per-position divergence, and $\mathbf{66\%}$ higher coupling fidelity. Every generated sequence passed the Pfam HMM filter (median $E$-value $8.1\!\times\!10^{-34}$). Because the Langevin gradient was recomputed from stored sequences at every step, it continuously steered samples toward the family's structural profile -- fidelity that the VAE, trained on only 68 examples, could not maintain.
+At generation temperature, SA matched the VAE on novelty while achieving $\mathbf{6.9\times}$ lower composition divergence, $\mathbf{3.4\times}$ lower per-position divergence, and $\mathbf{66\%}$ higher coupling fidelity. Every generated sequence passed the Pfam Hidden Markov Model (HMM) filter (median $E$-value $8.1\!\times\!10^{-34}$). Because the Langevin gradient was recomputed from stored sequences at every step, it continuously steered samples toward the family's structural profile -- fidelity that the VAE, trained on only 68 examples, could not maintain.
 \end{block}
 
 % -----------------------------------------------------------
