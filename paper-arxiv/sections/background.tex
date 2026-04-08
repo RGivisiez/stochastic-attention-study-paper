@@ -44,10 +44,7 @@ Two properties of this energy are essential for what follows. First, $E$ is $C^{
 \begin{equation}\label{eq:energy-lower-bound}
     E(\boldsymbol{\xi}) \;\ge\; \tfrac{1}{2}\bigl(\|\boldsymbol{\xi}\|_2 - M\bigr)^2 \;\ge\; 0,
 \end{equation}
-so $E$ grows at least quadratically as $\|\boldsymbol{\xi}\|\to\infty$. Iterates cannot escape to infinity.
-
-\paragraph{The bridge.}
-Ramsauer et al.~\cite{ramsauerHopfieldNetworksAll2021} observed that single-head attention~\eqref{eq:sdp-attention} with $\mathbf{Q}=\boldsymbol{\xi}^{\top}$, $\mathbf{K}=\mathbf{X}^{\top}$, $\mathbf{V}=\mathbf{X}^{\top}$, and inverse temperature $\beta=1/\sqrt{d}$ is \emph{exactly one step} of the retrieval map~\eqref{eq:hopfield-update}. In other words, every attention head is implicitly performing energy minimization on~\eqref{eq:modern-hopfield-energy}, revealing a hidden energy landscape whose minima are the stored memories.
+so $E$ grows at least quadratically as $\|\boldsymbol{\xi}\|\to\infty$. Iterates cannot escape to infinity. Ramsauer et al.~\cite{ramsauerHopfieldNetworksAll2021} further observed that single-head attention~\eqref{eq:sdp-attention} with $\mathbf{Q}=\boldsymbol{\xi}^{\top}$, $\mathbf{K}=\mathbf{X}^{\top}$, $\mathbf{V}=\mathbf{X}^{\top}$, and inverse temperature $\beta=1/\sqrt{d}$ is \emph{exactly one step} of the retrieval map~\eqref{eq:hopfield-update}, so every attention head is implicitly performing energy minimization on~\eqref{eq:modern-hopfield-energy}, revealing a hidden energy landscape whose minima are the stored memories.
 
 \paragraph{From minimization to sampling.}
 Given a smooth potential $U:\mathbb{R}^d\to\mathbb{R}$ with target density $p(\mathbf{x})\propto\exp(-U(\mathbf{x}))$, the (overdamped) Langevin stochastic differential equation is
