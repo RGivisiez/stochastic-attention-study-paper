@@ -79,6 +79,118 @@ function attention_entropy(ξ::Vector{Float64}, X::Matrix{Float64}, β::Float64)
 end
 
 """
+    attention_energy_moments(ξ::Vector{Float64}, X::Matrix{Float64}, β::Float64, k_max::Int; precision_bits::Int=precision(BigFloat)) -> Vector{BigFloat}
+
+Compute the sequence of attention-weighted energy moments ``\\langle E^k \\rangle`` for ``k = 0, \\dots, k_{\\max}``.
+
+The attention weights are
+``\\mathbf{p} = \\operatorname{softmax}(\\beta\\,\\mathbf{X}^\\top\\boldsymbol{\\xi})``,
+and the per-memory energies are defined as
+``E_i = -\\mathbf{m}_i^\\top\\boldsymbol{\\xi}``.
+The returned moments satisfy
+``\\langle E^k \\rangle = \\sum_i p_i E_i^k``.
+
+### Arguments
+- `ξ::Vector{Float64}`: State vector of dimension `d`.
+- `X::Matrix{Float64}`: Memory matrix of size `d × K`.
+- `β::Float64`: Inverse temperature (must be positive).
+- `k_max::Int`: Maximum moment order (must be non-negative).
+- `precision_bits::Int=precision(BigFloat)`: BigFloat precision (in bits) used for internal calculations.
+
+### Returns
+- `Vector{BigFloat}`: Length `k_max + 1` vector containing
+  `[⟨E^0⟩, ⟨E^1⟩, …, ⟨E^k_max⟩]`, with `⟨E^0⟩ = 1`.
+"""
+function attention_energy_moments(
+    ξ::Vector{Float64},
+    X::Matrix{Float64},
+    β::Float64,
+    k_max::Int;
+    precision_bits::Int=precision(BigFloat)
+)::Vector{BigFloat}
+    β > 0 || throw(ArgumentError("β must be positive, got β = $β"))
+    k_max >= 0 || throw(ArgumentError("k_max must be non-negative, got k_max = $k_max"))
+    precision_bits > 0 || throw(ArgumentError("precision_bits must be positive, got precision_bits = $precision_bits"))
+    length(ξ) == size(X, 1) || throw(DimensionMismatch(
+        "State has length $(length(ξ)) but X has $(size(X, 1)) rows"))
+
+    return setprecision(BigFloat, precision_bits) do
+        logits = BigFloat.(β .* (X' * ξ))
+        logits_max = maximum(logits)
+        exp_shifted = exp.(logits .- logits_max)
+        p = exp_shifted ./ sum(exp_shifted)
+        e = .-(BigFloat.(X' * ξ))
+
+        moments = zeros(BigFloat, k_max + 1)
+        moments[1] = big(1)  # <E^0>
+        k_max == 0 && return moments
+
+        e_pow = ones(BigFloat, length(e))  # E^0
+        for k in 1:k_max
+            e_pow .*= e
+            moments[k + 1] = sum(p .* e_pow)
+        end
+        return moments
+    end
+end
+
+"""
+    attention_energy_central_moments(ξ::Vector{Float64}, X::Matrix{Float64}, β::Float64, k_max::Int; precision_bits::Int=precision(BigFloat)) -> Vector{BigFloat}
+
+Compute the sequence of attention-weighted central energy moments for ``k = 0, \\dots, k_{\\max}``:
+``\\mu_k = \\sum_i p_i (E_i - \\bar{E})^k``,
+where
+``\\mathbf{p} = \\operatorname{softmax}(\\beta\\,\\mathbf{X}^\\top\\boldsymbol{\\xi})``,
+``E_i = -\\mathbf{m}_i^\\top\\boldsymbol{\\xi}``, and
+``\\bar{E} = \\sum_i p_i E_i``.
+
+### Arguments
+- `ξ::Vector{Float64}`: State vector of dimension `d`.
+- `X::Matrix{Float64}`: Memory matrix of size `d × K`.
+- `β::Float64`: Inverse temperature (must be positive).
+- `k_max::Int`: Maximum central moment order (must be non-negative).
+- `precision_bits::Int=precision(BigFloat)`: BigFloat precision (in bits) used for internal calculations.
+
+### Returns
+- `Vector{BigFloat}`: Length `k_max + 1` vector containing
+  `[μ₀, μ₁, …, μ_k_max]`, where `μ₀ = 1` and (up to numerical precision) `μ₁ = 0`.
+"""
+function attention_energy_central_moments(
+    ξ::Vector{Float64},
+    X::Matrix{Float64},
+    β::Float64,
+    k_max::Int;
+    precision_bits::Int=precision(BigFloat)
+)::Vector{BigFloat}
+    β > 0 || throw(ArgumentError("β must be positive, got β = $β"))
+    k_max >= 0 || throw(ArgumentError("k_max must be non-negative, got k_max = $k_max"))
+    precision_bits > 0 || throw(ArgumentError("precision_bits must be positive, got precision_bits = $precision_bits"))
+    length(ξ) == size(X, 1) || throw(DimensionMismatch(
+        "State has length $(length(ξ)) but X has $(size(X, 1)) rows"))
+
+    return setprecision(BigFloat, precision_bits) do
+        logits = BigFloat.(β .* (X' * ξ))
+        logits_max = maximum(logits)
+        exp_shifted = exp.(logits .- logits_max)
+        p = exp_shifted ./ sum(exp_shifted)
+        e = .-(BigFloat.(X' * ξ))
+        e_mean = sum(p .* e)
+        e_centered = e .- e_mean
+
+        moments = zeros(BigFloat, k_max + 1)
+        moments[1] = big(1)  # μ0
+        k_max == 0 && return moments
+
+        e_pow = ones(BigFloat, length(e_centered))
+        for k in 1:k_max
+            e_pow .*= e_centered
+            moments[k + 1] = sum(p .* e_pow)
+        end
+        return moments
+    end
+end
+
+"""
     sample_novelty(ξ::Vector{Float64}, X::Matrix{Float64}) -> Float64
 
 Compute the novelty of a generated sample `ξ` with respect to the memory matrix `X`.
@@ -162,4 +274,120 @@ function sample_quality(samples::Vector{Vector{Float64}}, X::Matrix{Float64}, β
     S = length(samples)
     S == 0 && return 0.0
     return sum(hopfield_energy(s, X, β) for s in samples) / S
+end
+
+"""
+    sample_energy_moments(samples::Vector{Vector{Float64}}, X::Matrix{Float64}, β::Float64, k_max::Int; precision_bits::Int=precision(BigFloat)) -> Vector{BigFloat}
+
+Compute empirical moments of Hopfield energy over a collection of samples:
+``\\langle E^k \\rangle = \\frac{1}{S}\\sum_{i=1}^{S} E(\\boldsymbol{\\xi}_i)^k``,
+for ``k = 0, \\dots, k_{\\max}``.
+
+### Arguments
+- `samples::Vector{Vector{Float64}}`: Collection of `S` generated sample vectors.
+- `X::Matrix{Float64}`: Memory matrix of size `d × K`.
+- `β::Float64`: Inverse temperature (must be positive).
+- `k_max::Int`: Maximum moment order (must be non-negative).
+- `precision_bits::Int=precision(BigFloat)`: BigFloat precision (in bits) used for internal calculations.
+
+### Returns
+- `Vector{BigFloat}`: Length `k_max + 1` vector containing
+  `[⟨E^0⟩, ⟨E^1⟩, …, ⟨E^k_max⟩]`. For empty input, returns `[1, 0, …, 0]`.
+"""
+function sample_energy_moments(
+    samples::Vector{Vector{Float64}},
+    X::Matrix{Float64},
+    β::Float64,
+    k_max::Int;
+    precision_bits::Int=precision(BigFloat)
+)::Vector{BigFloat}
+    β > 0 || throw(ArgumentError("β must be positive, got β = $β"))
+    k_max >= 0 || throw(ArgumentError("k_max must be non-negative, got k_max = $k_max"))
+    precision_bits > 0 || throw(ArgumentError("precision_bits must be positive, got precision_bits = $precision_bits"))
+
+    return setprecision(BigFloat, precision_bits) do
+        X_big = BigFloat.(X)
+        β_big = BigFloat(β)
+
+        function hopfield_energy_big(ξ::Vector{Float64})::BigFloat
+            ξ_big = BigFloat.(ξ)
+            logits = β_big .* (X_big' * ξ_big)
+            logits_max = maximum(logits)
+            lse = logits_max + log(sum(exp.(logits .- logits_max)))
+            return big(0.5) * dot(ξ_big, ξ_big) - lse / β_big
+        end
+
+        moments = zeros(BigFloat, k_max + 1)
+        moments[1] = big(1)  # <E^0>
+        isempty(samples) && return moments
+        k_max == 0 && return moments
+
+        energies = BigFloat[hopfield_energy_big(s) for s in samples]
+        e_pow = ones(BigFloat, length(energies))
+        for k in 1:k_max
+            e_pow .*= energies
+            moments[k + 1] = sum(e_pow) / length(energies)
+        end
+        return moments
+    end
+end
+
+"""
+    sample_energy_central_moments(samples::Vector{Vector{Float64}}, X::Matrix{Float64}, β::Float64, k_max::Int; precision_bits::Int=precision(BigFloat)) -> Vector{BigFloat}
+
+Compute empirical central moments of Hopfield energy over a collection of samples:
+``\\mu_k = \\frac{1}{S}\\sum_{i=1}^{S} (E(\\boldsymbol{\\xi}_i) - \\bar{E})^k``,
+for ``k = 0, \\dots, k_{\\max}``, with
+``\\bar{E} = \\frac{1}{S}\\sum_i E(\\boldsymbol{\\xi}_i)``.
+
+### Arguments
+- `samples::Vector{Vector{Float64}}`: Collection of `S` generated sample vectors.
+- `X::Matrix{Float64}`: Memory matrix of size `d × K`.
+- `β::Float64`: Inverse temperature (must be positive).
+- `k_max::Int`: Maximum central moment order (must be non-negative).
+- `precision_bits::Int=precision(BigFloat)`: BigFloat precision (in bits) used for internal calculations.
+
+### Returns
+- `Vector{BigFloat}`: Length `k_max + 1` vector containing
+  `[μ₀, μ₁, …, μ_k_max]`. For empty input, returns `[1, 0, …, 0]`.
+"""
+function sample_energy_central_moments(
+    samples::Vector{Vector{Float64}},
+    X::Matrix{Float64},
+    β::Float64,
+    k_max::Int;
+    precision_bits::Int=precision(BigFloat)
+)::Vector{BigFloat}
+    β > 0 || throw(ArgumentError("β must be positive, got β = $β"))
+    k_max >= 0 || throw(ArgumentError("k_max must be non-negative, got k_max = $k_max"))
+    precision_bits > 0 || throw(ArgumentError("precision_bits must be positive, got precision_bits = $precision_bits"))
+
+    return setprecision(BigFloat, precision_bits) do
+        X_big = BigFloat.(X)
+        β_big = BigFloat(β)
+
+        function hopfield_energy_big(ξ::Vector{Float64})::BigFloat
+            ξ_big = BigFloat.(ξ)
+            logits = β_big .* (X_big' * ξ_big)
+            logits_max = maximum(logits)
+            lse = logits_max + log(sum(exp.(logits .- logits_max)))
+            return big(0.5) * dot(ξ_big, ξ_big) - lse / β_big
+        end
+
+        moments = zeros(BigFloat, k_max + 1)
+        moments[1] = big(1)  # μ0
+        isempty(samples) && return moments
+        k_max == 0 && return moments
+
+        energies = BigFloat[hopfield_energy_big(s) for s in samples]
+        e_mean = sum(energies) / length(energies)
+        e_centered = energies .- e_mean
+
+        e_pow = ones(BigFloat, length(e_centered))
+        for k in 1:k_max
+            e_pow .*= e_centered
+            moments[k + 1] = sum(e_pow) / length(e_centered)
+        end
+        return moments
+    end
 end
