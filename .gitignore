@@ -1,4 +1,8 @@
 CLAUDE.md
 paper-neurips/
+<<<<<<< HEAD
 *.dat
+=======
+*.julia_depot/*
+>>>>>>> 0c98f31 (Adicionar padrões de ignorância para diretórios e arquivos relacionados ao Julia e Singularity)
 *.sif
