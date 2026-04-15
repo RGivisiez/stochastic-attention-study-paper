@@ -3,18 +3,46 @@ From: ubuntu:22.04
 
 %labels
     Author stock_attn
-    Description Julia 1.12.5 + HMMER runtime for stochastic-attention reproduction
+    Description Complete Julia 1.12.5 + HMMER environment for stock_attn reproducibility
 
 %environment
     export LC_ALL=C.UTF-8
     export LANG=C.UTF-8
-    export JULIA_DEPOT_PATH=/opt/julia_depot
+    export JULIA_DEPOT_PATH=/opt/julia_depot:/tmp/julia_depot
+    export JULIA_NUM_THREADS=auto
     export PATH=/opt/julia/bin:$PATH
 
+%help
+    Complete reproducibility image for stock_attn.
+
+    This image includes:
+    - Julia 1.12.5
+    - HMMER (hmmsearch) and gzip tools used by protein scripts
+    - Python + Jupyter for notebook workflows
+    - Pre-instantiated and precompiled Julia environments for:
+      /opt/stock_attn/code
+      /opt/stock_attn/code/mnist-experiment
+      /opt/stock_attn/code/simpsons-experiment
+      /opt/stock_attn/code/financial-experiment
+
+    Example:
+      singularity exec --bind $PWD:/workspace stock_attn.sif \
+        bash -lc 'cd /workspace && julia --project=code code/test/runtests.jl'
+
+%files
+    code /opt/stock_attn/code
+    README.md /opt/stock_attn/README.md
+    LICENSE /opt/stock_attn/LICENSE
+
 %post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+
     apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates wget curl git bash gzip xz-utils bzip2 \
-        build-essential pkg-config hmmer python3 python3-pip \
+        build-essential pkg-config hmmer python3 python3-pip python3-venv \
+        libgl1 libxext6 libxrender1 libxt6 libx11-6 libfontconfig1 \
+        fonts-dejavu-core \
         && rm -rf /var/lib/apt/lists/*
 
     mkdir -p /opt/julia /opt/julia_depot
@@ -22,8 +50,27 @@ From: ubuntu:22.04
     tar -xzf julia-1.12.5-linux-x86_64.tar.gz
     mv julia-1.12.5/* /opt/julia/
     rm -rf julia-1.12.5 julia-1.12.5-linux-x86_64.tar.gz
+    ln -sf /opt/julia/bin/julia /usr/local/bin/julia
 
-    /opt/julia/bin/julia -e 'using Pkg; Pkg.Registry.add("General")'
+    # Optional notebook workflow support
+    python3 -m pip install --no-cache-dir --upgrade pip
+    python3 -m pip install --no-cache-dir jupyterlab notebook
+
+    # Pre-load Julia registry and instantiate all project environments
+    julia -e 'using Pkg; Pkg.Registry.add("General")'
+    julia --project=/opt/stock_attn/code -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+    julia --project=/opt/stock_attn/code/mnist-experiment -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+    julia --project=/opt/stock_attn/code/simpsons-experiment -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+    julia --project=/opt/stock_attn/code/financial-experiment -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+
+    # Ensure runtime users can read baked assets.
+    chmod -R a+rX /opt/stock_attn /opt/julia /opt/julia_depot
 
 %runscript
+    cd /opt/stock_attn
     exec /bin/bash "$@"
+
+%test
+    julia --version | grep '1.12.5'
+    command -v hmmsearch
+    hmmsearch -h >/dev/null
